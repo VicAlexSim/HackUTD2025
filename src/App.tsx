@@ -840,11 +840,13 @@ function VisionAnalysisModal({ cameraId, onClose }: { cameraId: Id<"cameraFeeds"
                   />
                 </div>
               ) : (
-                <div className="aspect-video bg-gray-900 rounded-lg flex items-center justify-center text-white">
-                  <div className="text-center">
-                    <p className="mb-2">Stream URL: {camera.streamUrl}</p>
-                    <p className="text-sm text-gray-400">Direct video streaming requires external integration</p>
-                  </div>
+                <div className="aspect-video bg-black rounded-lg overflow-hidden">
+                  <iframe
+                    src={camera.streamUrl}
+                    className="w-full h-full"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
                 </div>
               )}
             </div>
