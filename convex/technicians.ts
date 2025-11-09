@@ -70,3 +70,21 @@ export const listTechniciansInternal = internalQuery({
     return await ctx.db.query("technicians").collect();
   },
 });
+
+export const deleteTechnician = mutation({
+  args: { technicianId: v.id("technicians") },
+  handler: async (ctx, args) => {
+    await ctx.db.delete(args.technicianId);
+  },
+});
+
+export const getVoiceInteractions = query({
+  args: { technicianId: v.id("technicians") },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("voiceInteractions")
+      .withIndex("by_technician", (q) => q.eq("technicianId", args.technicianId))
+      .order("desc")
+      .take(10);
+  },
+});

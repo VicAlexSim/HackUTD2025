@@ -149,3 +149,10 @@ export const createTicketInternal = internalMutation({
     });
   },
 });
+
+export const deleteTicket = mutation({
+  args: { ticketId: v.id("tickets") },
+  handler: async (ctx, args) => {
+    await ctx.db.delete(args.ticketId);
+  },
+});

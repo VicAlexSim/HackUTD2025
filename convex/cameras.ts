@@ -66,3 +66,21 @@ export const toggleCameraActive = mutation({
     });
   },
 });
+
+export const deleteCamera = mutation({
+  args: { cameraId: v.id("cameraFeeds") },
+  handler: async (ctx, args) => {
+    await ctx.db.delete(args.cameraId);
+  },
+});
+
+export const getVisionAnalysis = query({
+  args: { cameraId: v.id("cameraFeeds") },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("visionAnalysis")
+      .withIndex("by_camera", (q) => q.eq("cameraId", args.cameraId))
+      .order("desc")
+      .take(10);
+  },
+});

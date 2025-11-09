@@ -45,3 +45,10 @@ export const listDocuments = query({
     return await ctx.db.query("documents").collect();
   },
 });
+
+export const deleteDocument = mutation({
+  args: { documentId: v.id("documents") },
+  handler: async (ctx, args) => {
+    await ctx.db.delete(args.documentId);
+  },
+});

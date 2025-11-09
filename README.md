@@ -75,21 +75,29 @@ Required:
 ## Usage
 
 1. **Add Technicians** - Create technician profiles with skills
-2. **Add Cameras** - Register camera feeds with stream URLs
+2. **Add Cameras** - Register camera feeds with stream URLs (YouTube URLs work!)
 3. **Add Documentation** - Upload SOPs and safety guides
 4. **Monitor Dashboard** - View tickets, technicians, and camera status
 
 ### Camera Integration
 
-Send frames to the vision agent:
+**Important**: The system does NOT automatically analyze video streams. You need to:
+
+1. Extract frames from your video source (using ffmpeg, OpenCV, or similar)
+2. Convert frames to base64
+3. Send them to the API endpoint
+
+Example with curl:
 ```bash
-curl -X POST https://your-deployment.convex.site/api/analyze-frame \
+curl -X POST https://accurate-marlin-326.convex.site/api/analyze-frame \
   -H "Content-Type: application/json" \
   -d '{
-    "cameraId": "camera_id",
-    "frameData": "base64_image_data"
+    "cameraId": "your_camera_id_here",
+    "frameData": "base64_encoded_image_data"
   }'
 ```
+
+**YouTube Videos**: You can add YouTube URLs as camera feeds. The video will play in the Vision Analysis modal, but you still need to extract and send frames manually for AI analysis.
 
 ### Automatic Ticket Creation
 
