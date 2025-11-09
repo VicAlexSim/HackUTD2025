@@ -38,6 +38,7 @@ type Page = "tickets" | "cameras" | "activity" | "inventory";
 export default function App() {
   const loggedInUser = useQuery(api.auth.loggedInUser);
   const [activePage, setActivePage] = useState<Page>("tickets");
+  const pages: Page[] = ["tickets", "technicians", "cameras", "activity", "inventory"]
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -52,30 +53,16 @@ export default function App() {
 
             {/* Navigation Links */}
             <div className="hidden md:flex items-center gap-6">
-              <button 
-                onClick={() => setActivePage("tickets")}
-                className={`glassy-text hover:text-white transition-colors font-medium text-sm ${activePage === "tickets" ? "text-white" : ""}`}
-              >
-                Tickets
-              </button>
-              <button 
-                onClick={() => setActivePage("cameras")}
-                className={`glassy-text hover:text-white transition-colors font-medium text-sm ${activePage === "cameras" ? "text-white" : ""}`}
-              >
-                Cameras
-              </button>
-              <button 
-                onClick={() => setActivePage("activity")}
-                className={`glassy-text hover:text-white transition-colors font-medium text-sm ${activePage === "activity" ? "text-white" : ""}`}
-              >
-                Activity
-              </button>
-              <button 
-                onClick={() => setActivePage("inventory")}
-                className={`glassy-text hover:text-white transition-colors font-medium text-sm ${activePage === "inventory" ? "text-white" : ""}`}
-              >
-                Inventory
-              </button>
+              {pages.map((page) => (
+									<button
+										type="button"
+										key={page}
+										onClick={() => setActivePage(page)}
+										className={`glassy-text hover:text-shadow-none hover:text-gray-300 transition-colors font-medium text-sm ${activePage === page ? "text-white" : ""}`}
+									>
+										{page[0].toUpperCase()}{page.slice(1)}
+									</button>
+								))}
             </div>
 
             {/* Sign Out Button */}
@@ -251,7 +238,7 @@ function TicketsView() {
 
       <div className="grid gap-4">
         {tickets?.map((ticket) => (
-          <div key={ticket._id} className="glass-strong p-6 rounded-xl border border-white/10 hover:border-[#64A8F0]/20 transition-all hover:shadow-glow group">
+          <div key={ticket._id} className="glass-strong p-6 rounded-xl border border-white/10 hover:border-[#64A8F0]/20 transition-all hover:shadow-glow group lg:max-w-lg">
             <div className="flex justify-between items-start mb-3">
               <h3 className="text-xl font-bold text-white group-hover:text-gray-300 transition-colors">{ticket.title}</h3>
               <div className="flex gap-2 items-center">

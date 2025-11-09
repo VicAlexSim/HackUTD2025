@@ -3,6 +3,10 @@ import logo from "./logo.jpg";
 
 export function LandingPage({ onGetStarted, onLogin }: { onGetStarted: () => void; onLogin: () => void }) {
   const [activeTab, setActiveTab] = useState<"demo" | "start">("demo");
+  
+  const date = new Date()
+  
+  date.setDate(date.getDate()-2)
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-gray-800 via-gray-900 to-gray-950">
@@ -142,26 +146,26 @@ export function LandingPage({ onGetStarted, onLogin }: { onGetStarted: () => voi
               <div className="glass p-4 rounded-lg border border-white/10">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-sm font-semibold glassy-text flex items-center gap-1.5">
-                    <span>👤</span> User Information
+                    <span>👤</span> Rack Intelligence
                   </h3>
                   <button className="text-blue-400 text-xs">Show</button>
                 </div>
                 <div className="space-y-2 text-xs">
                   <div>
-                    <p className="text-gray-500">User ID</p>
-                    <p className="glassy-text font-mono">USR12345</p>
+                    <p className="text-gray-500">Rack Identifier</p>
+                    <p className="glassy-text font-mono">DFW-H21-R02</p>
                   </div>
                   <div>
-                    <p className="text-gray-500">Name</p>
-                    <p className="glassy-text">John Doe</p>
+                    <p className="text-gray-500">Primary Workload</p>
+                    <p className="glassy-text">Storage</p>
                   </div>
                   <div>
-                    <p className="text-gray-500">SSN</p>
-                    <p className="glassy-text font-mono">***-**-****</p>
+                    <p className="text-gray-500">Server Models</p>
+                    <p className="glassy-text font-mono">Dell R650 [4] <i>(103 more in DFW-H21 - <a className="underline" href="#">monitor similar servers</a>)</i></p>
                   </div>
                   <div>
-                    <p className="text-gray-500">Account Number</p>
-                    <p className="glassy-text font-mono">••••••1234</p>
+                    <p className="text-gray-500">Last Issue Reported</p>
+                    <p className="glassy-text font-mono">{date.toLocaleString()}</p>
                   </div>
                 </div>
               </div>
@@ -183,7 +187,7 @@ export function LandingPage({ onGetStarted, onLogin }: { onGetStarted: () => voi
                         <span className="text-[10px] text-gray-500">10:30 AM</span>
                       </div>
                       <div className="glass-strong p-2 rounded-lg border border-white/10">
-                        <p className="text-xs glassy-text">Camera detected equipment malfunction in Bay 3</p>
+                        <p className="text-xs glassy-text">High temps detected on DFW-H21-R02-S2321, DFW-H21-R02-S2322, and 1 more server...</p>
                       </div>
                     </div>
                   </div>

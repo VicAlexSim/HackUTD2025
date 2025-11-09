@@ -23,7 +23,7 @@ export const captureFramesFromActiveCameras = internalAction({
     console.log("🎥 Auto-capture: Checking active cameras...");
 
     // Get cameras that need frame capture
-    const camerasToProcess: Array<any> = await ctx.runQuery(internal.agents.autoCaptureQueries.getCamerasNeedingCapture);
+    const camerasToProcess = await ctx.runQuery(internal.agents.autoCaptureQueries.getCamerasNeedingCapture);
 
     if (camerasToProcess.length === 0) {
       console.log("   No cameras need processing");
