@@ -40,7 +40,7 @@ class Subscriber:
             time.sleep(0.01)
 
 pub = Publisher()
-
+first = True
 # Create a Flask app instance
 app = Flask(__name__, static_url_path='/static')
 con = None
@@ -48,17 +48,20 @@ con = None
 pcs = set()
 @app.before_request
 def first_req():
+    global first
     global ctrl
     global con
-    if con is None:
-        try:
-            ctrl = initialize_cam()
-            con = start_stream_capture(ctrl)
-            generate_frames()
-        except Exception as e:
-            print("dang")
-            print(e)
-            #close_cam(ctrl[1])
+    if first:
+        first = False
+        if con is None:
+            try:
+                ctrl = initialize_cam()
+                con = start_stream_capture(ctrl)
+                generate_frames()
+            except Exception as e:
+                print("dang")
+                print(e)
+                #close_cam(ctrl[1])
 
 
 # Function to generate video frames from the camera
