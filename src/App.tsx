@@ -549,8 +549,8 @@ function CamerasView() {
           <div key={camera._id} className="glass-strong p-6 rounded-xl border border-white/10 hover:border-cyan-500/30 transition-all hover:shadow-glow group">
             <div className="flex justify-between items-start mb-3">
               <div>
-                <h3 className="text-lg font-bold text-white group-hover:text-cyan-300 transition-colors">{camera.name}</h3>
-                <p className="text-xs text-gray-500 mt-1 font-mono">{camera._id}</p>
+                <h3 className="text-lg font-semibold">{camera.name}</h3>
+                <p className="text-xs text-gray-400 mt-1">{camera._id}</p>
               </div>
               <div className="flex gap-2 items-center">
                 <span className={`px-3 py-1 rounded-lg text-xs font-semibold ${
