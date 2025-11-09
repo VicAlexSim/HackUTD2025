@@ -8,11 +8,6 @@
  * @module
  */
 
-import type {
-  ApiFromModules,
-  FilterApi,
-  FunctionReference,
-} from "convex/server";
 import type * as agents_autoCaptureAgent from "../agents/autoCaptureAgent.js";
 import type * as agents_autoCaptureQueries from "../agents/autoCaptureQueries.js";
 import type * as agents_coordinatorAgent from "../agents/coordinatorAgent.js";
@@ -33,6 +28,12 @@ import type * as http from "../http.js";
 import type * as router from "../router.js";
 import type * as technicians from "../technicians.js";
 import type * as tickets from "../tickets.js";
+
+import type {
+  ApiFromModules,
+  FilterApi,
+  FunctionReference,
+} from "convex/server";
 
 /**
  * A utility for referencing Convex functions in your app's API.
@@ -64,11 +65,15 @@ declare const fullApi: ApiFromModules<{
   technicians: typeof technicians;
   tickets: typeof tickets;
 }>;
+declare const fullApiWithMounts: typeof fullApi;
+
 export declare const api: FilterApi<
-  typeof fullApi,
+  typeof fullApiWithMounts,
   FunctionReference<any, "public">
 >;
 export declare const internal: FilterApi<
-  typeof fullApi,
+  typeof fullApiWithMounts,
   FunctionReference<any, "internal">
 >;
+
+export declare const components: {};

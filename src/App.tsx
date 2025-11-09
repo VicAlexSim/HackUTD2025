@@ -8,15 +8,15 @@ import { Id } from "../convex/_generated/dataModel";
 
 export default function App() {
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
-      <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-sm h-16 flex justify-between items-center border-b shadow-sm px-4">
-        <h2 className="text-xl font-semibold text-primary">Technician Vision AI</h2>
+    <div className="min-h-screen flex flex-col">
+      <header className="sticky top-0 z-10 glass-strong h-16 flex justify-between items-center border-b border-white/10 px-6">
+        <h2 className="text-2xl font-bold gradient-text">Technician Vision AI</h2>
         <SignOutButton />
       </header>
       <main className="flex-1 p-8">
         <Content />
       </main>
-      <Toaster />
+      <Toaster theme="dark" />
     </div>
   );
 }
@@ -26,8 +26,11 @@ function Content() {
 
   if (loggedInUser === undefined) {
     return (
-      <div className="flex justify-center items-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="flex justify-center items-center min-h-[60vh]">
+        <div className="relative">
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-purple-500/20 border-t-purple-500"></div>
+          <div className="absolute inset-0 rounded-full bg-purple-500/20 blur-xl"></div>
+        </div>
       </div>
     );
   }
@@ -38,12 +41,14 @@ function Content() {
         <Dashboard />
       </Authenticated>
       <Unauthenticated>
-        <div className="max-w-md mx-auto">
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-primary mb-4">Multi-Agent Maintenance System</h1>
-            <p className="text-xl text-secondary">Sign in to access the dashboard</p>
+        <div className="max-w-md mx-auto mt-12">
+          <div className="text-center mb-10">
+            <h1 className="text-5xl font-bold gradient-text mb-4">Multi-Agent Maintenance System</h1>
+            <p className="text-xl text-gray-400">Sign in to access the dashboard</p>
           </div>
-          <SignInForm />
+          <div className="glass-strong p-8 rounded-2xl border border-white/10 shadow-glow">
+            <SignInForm />
+          </div>
         </div>
       </Unauthenticated>
     </div>
@@ -55,48 +60,48 @@ function Dashboard() {
 
   return (
     <div className="max-w-7xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-primary mb-2">Maintenance Control Center</h1>
-        <p className="text-secondary">Multi-agent system with vision AI, voice guidance, and autonomous ticket management</p>
+      <div className="mb-10">
+        <h1 className="text-4xl font-bold gradient-text mb-3">Maintenance Control Center</h1>
+        <p className="text-lg text-gray-400">Multi-agent system with vision AI, voice guidance, and autonomous ticket management</p>
       </div>
 
-      <div className="flex gap-2 mb-6 border-b">
+      <div className="glass p-1 rounded-xl mb-8 inline-flex gap-1">
         <button
           onClick={() => setActiveTab("tickets")}
-          className={`px-4 py-2 font-medium transition-colors ${
+          className={`px-6 py-3 font-semibold rounded-lg transition-all ${
             activeTab === "tickets"
-              ? "text-primary border-b-2 border-primary"
-              : "text-gray-500 hover:text-gray-700"
+              ? "bg-gradient-primary text-white shadow-glow"
+              : "text-gray-400 hover:text-white hover:bg-white/5"
           }`}
         >
-          Tickets
+          🎫 Tickets
         </button>
         <button
           onClick={() => setActiveTab("technicians")}
-          className={`px-4 py-2 font-medium transition-colors ${
+          className={`px-6 py-3 font-semibold rounded-lg transition-all ${
             activeTab === "technicians"
-              ? "text-primary border-b-2 border-primary"
-              : "text-gray-500 hover:text-gray-700"
+              ? "bg-gradient-primary text-white shadow-glow"
+              : "text-gray-400 hover:text-white hover:bg-white/5"
           }`}
         >
-          Technicians
+          👷 Technicians
         </button>
         <button
           onClick={() => setActiveTab("cameras")}
-          className={`px-4 py-2 font-medium transition-colors ${
+          className={`px-6 py-3 font-semibold rounded-lg transition-all ${
             activeTab === "cameras"
-              ? "text-primary border-b-2 border-primary"
-              : "text-gray-500 hover:text-gray-700"
+              ? "bg-gradient-primary text-white shadow-glow"
+              : "text-gray-400 hover:text-white hover:bg-white/5"
           }`}
         >
-          Cameras
+          📹 Cameras
         </button>
         <button
           onClick={() => setActiveTab("docs")}
-          className={`px-4 py-2 font-medium transition-colors ${
+          className={`px-6 py-3 font-semibold rounded-lg transition-all ${
             activeTab === "docs"
-              ? "text-primary border-b-2 border-primary"
-              : "text-gray-500 hover:text-gray-700"
+              ? "bg-gradient-primary text-white shadow-glow"
+              : "text-gray-400 hover:text-white hover:bg-white/5"
           }`}
         >
           Documentation
@@ -134,75 +139,77 @@ function TicketsView() {
 
   const getPriorityColor = (priority: string) => {
     const colors: Record<string, string> = {
-      low: "bg-blue-100 text-blue-800",
-      medium: "bg-yellow-100 text-yellow-800",
-      high: "bg-orange-100 text-orange-800",
-      critical: "bg-red-100 text-red-800",
+      low: "bg-blue-500/20 text-blue-300 border border-blue-500/30",
+      medium: "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30",
+      high: "bg-orange-500/20 text-orange-300 border border-orange-500/30",
+      critical: "bg-red-500/20 text-red-300 border border-red-500/30",
     };
-    return colors[priority] || "bg-gray-100 text-gray-800";
+    return colors[priority] || "bg-gray-500/20 text-gray-300 border border-gray-500/30";
   };
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
-      pending: "bg-gray-100 text-gray-800",
-      in_progress: "bg-blue-100 text-blue-800",
-      completed: "bg-green-100 text-green-800",
-      blocked: "bg-red-100 text-red-800",
+      pending: "bg-gray-500/20 text-gray-300 border border-gray-500/30",
+      in_progress: "bg-blue-500/20 text-blue-300 border border-blue-500/30",
+      completed: "bg-green-500/20 text-green-300 border border-green-500/30",
+      blocked: "bg-red-500/20 text-red-300 border border-red-500/30",
     };
-    return colors[status] || "bg-gray-100 text-gray-800";
+    return colors[status] || "bg-gray-500/20 text-gray-300 border border-gray-500/30";
   };
 
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Tickets</h2>
+        <h2 className="text-3xl font-bold text-white">Tickets</h2>
         <button
           onClick={() => setShowForm(!showForm)}
-          className="px-4 py-2 bg-primary text-white rounded hover:bg-primary-hover transition-colors"
+          className="px-6 py-3 bg-gradient-primary text-white rounded-lg hover:shadow-glow transition-all font-semibold transform hover:scale-105"
         >
-          {showForm ? "Cancel" : "Create Ticket"}
+          {showForm ? "✕ Cancel" : "+ Create Ticket"}
         </button>
       </div>
 
       {showForm && (
-        <form onSubmit={handleCreateTicket} className="bg-white p-6 rounded-lg shadow mb-6">
+        <form onSubmit={handleCreateTicket} className="glass-strong p-6 rounded-xl border border-white/10 mb-6">
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-1">Title</label>
+              <label className="block text-sm font-semibold text-gray-300 mb-2">Title</label>
               <input
                 name="title"
                 type="text"
                 required
-                className="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-primary"
+                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/50 outline-none transition-all"
+                placeholder="Enter ticket title..."
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Description</label>
+              <label className="block text-sm font-semibold text-gray-300 mb-2">Description</label>
               <textarea
                 name="description"
                 required
                 rows={3}
-                className="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-primary"
+                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/50 outline-none transition-all resize-none"
+                placeholder="Describe the issue..."
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Priority</label>
+              <label className="block text-sm font-semibold text-gray-300 mb-2">Priority</label>
               <select
                 name="priority"
                 required
-                className="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-primary"
+                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:border-purple-500 focus:ring-2 focus:ring-purple-500/50 outline-none transition-all"
               >
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-                <option value="critical">Critical</option>
+                <option value="low" className="bg-dark-card">Low</option>
+                <option value="medium" className="bg-dark-card">Medium</option>
+                <option value="high" className="bg-dark-card">High</option>
+                <option value="critical" className="bg-dark-card">Critical</option>
               </select>
             </div>
             <button
               type="submit"
-              className="w-full px-4 py-2 bg-primary text-white rounded hover:bg-primary-hover transition-colors"
+              className="w-full px-4 py-3 bg-gradient-primary text-white rounded-lg hover:shadow-glow transition-all font-semibold transform hover:scale-[1.02]"
             >
-              Create
+              Create Ticket
             </button>
           </div>
         </form>
@@ -210,43 +217,53 @@ function TicketsView() {
 
       <div className="grid gap-4">
         {tickets?.map((ticket) => (
-          <div key={ticket._id} className="bg-white p-6 rounded-lg shadow">
-            <div className="flex justify-between items-start mb-2">
-              <h3 className="text-lg font-semibold">{ticket.title}</h3>
+          <div key={ticket._id} className="glass-strong p-6 rounded-xl border border-white/10 hover:border-purple-500/30 transition-all hover:shadow-glow group">
+            <div className="flex justify-between items-start mb-3">
+              <h3 className="text-xl font-bold text-white group-hover:text-purple-300 transition-colors">{ticket.title}</h3>
               <div className="flex gap-2 items-center">
-                <span className={`px-2 py-1 rounded text-xs font-medium ${getPriorityColor(ticket.priority)}`}>
-                  {ticket.priority}
+                <span className={`px-3 py-1 rounded-lg text-xs font-semibold ${getPriorityColor(ticket.priority)}`}>
+                  {ticket.priority.toUpperCase()}
                 </span>
-                <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(ticket.status)}`}>
-                  {ticket.status}
+                <span className={`px-3 py-1 rounded-lg text-xs font-semibold ${getStatusColor(ticket.status)}`}>
+                  {ticket.status.replace('_', ' ').toUpperCase()}
                 </span>
                 <button
                   onClick={() => deleteTicket({ ticketId: ticket._id })}
-                  className="text-red-600 hover:text-red-800 text-sm"
+                  className="text-red-400 hover:text-red-300 text-lg transition-colors ml-2"
                   title="Delete ticket"
                 >
                   🗑️
                 </button>
               </div>
             </div>
-            <p className="text-gray-600 mb-3">{ticket.description}</p>
+            <p className="text-gray-400 mb-4 leading-relaxed">{ticket.description}</p>
             <div className="flex justify-between items-center text-sm text-gray-500">
-              <span>Created by: {ticket.createdBy}</span>
+              <span className="flex items-center gap-2">
+                <span className="text-purple-400">👤</span>
+                Created by: <span className="text-gray-300">{ticket.createdBy}</span>
+              </span>
               {ticket.technician && (
-                <span>Assigned to: {ticket.technician.name}</span>
+                <span className="flex items-center gap-2">
+                  <span className="text-blue-400">👷</span>
+                  Assigned to: <span className="text-gray-300">{ticket.technician.name}</span>
+                </span>
               )}
             </div>
             {ticket.metadata?.detectedIssue && (
-              <div className="mt-3 p-3 bg-yellow-50 rounded border border-yellow-200">
-                <p className="text-sm font-medium text-yellow-800">AI Detected Issue</p>
-                <p className="text-sm text-yellow-700 mt-1">{ticket.metadata.detectedIssue}</p>
+              <div className="mt-4 p-4 bg-yellow-500/10 rounded-lg border border-yellow-500/30">
+                <p className="text-sm font-semibold text-yellow-300 flex items-center gap-2">
+                  <span>🤖</span> AI Detected Issue
+                </p>
+                <p className="text-sm text-yellow-200/80 mt-2">{ticket.metadata.detectedIssue}</p>
               </div>
             )}
           </div>
         ))}
         {tickets?.length === 0 && (
-          <div className="text-center py-12 text-gray-500">
-            No tickets yet. Create one to get started.
+          <div className="glass p-12 rounded-xl border border-white/10 text-center">
+            <div className="text-6xl mb-4">🎫</div>
+            <p className="text-xl text-gray-400">No tickets yet</p>
+            <p className="text-gray-500 mt-2">Create your first ticket to get started</p>
           </div>
         )}
       </div>
@@ -475,51 +492,53 @@ function CamerasView() {
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Camera Feeds</h2>
+        <h2 className="text-3xl font-bold text-white">Camera Feeds</h2>
         <button
           onClick={() => setShowForm(!showForm)}
-          className="px-4 py-2 bg-primary text-white rounded hover:bg-primary-hover transition-colors"
+          className="px-6 py-3 bg-gradient-accent text-white rounded-lg hover:shadow-glow transition-all font-semibold transform hover:scale-105"
         >
-          {showForm ? "Cancel" : "Add Camera"}
+          {showForm ? "✕ Cancel" : "+ Add Camera"}
         </button>
       </div>
 
       {showForm && (
-        <form onSubmit={handleCreateCamera} className="bg-white p-6 rounded-lg shadow mb-6">
+        <form onSubmit={handleCreateCamera} className="glass-strong p-6 rounded-xl border border-white/10 mb-6">
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-1">Name</label>
+              <label className="block text-sm font-semibold text-gray-300 mb-2">Name</label>
               <input
                 name="name"
                 type="text"
                 required
-                className="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-primary"
+                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/50 outline-none transition-all"
+                placeholder="Camera name..."
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Stream URL (YouTube or other)</label>
+              <label className="block text-sm font-semibold text-gray-300 mb-2">Stream URL (YouTube or other)</label>
               <input
                 name="streamUrl"
                 type="text"
                 required
                 placeholder="https://www.youtube.com/watch?v=..."
-                className="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-primary"
+                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/50 outline-none transition-all"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Location</label>
+              <label className="block text-sm font-semibold text-gray-300 mb-2">Location</label>
               <input
                 name="location"
                 type="text"
                 required
-                className="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-primary"
+                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/50 outline-none transition-all"
+                placeholder="Camera location..."
               />
             </div>
             <button
               type="submit"
-              className="w-full px-4 py-2 bg-primary text-white rounded hover:bg-primary-hover transition-colors"
+              className="w-full px-4 py-3 bg-gradient-accent text-white rounded-lg hover:shadow-glow transition-all font-semibold transform hover:scale-[1.02]"
             >
-              Add
+              Add Camera
             </button>
           </div>
         </form>
@@ -527,32 +546,59 @@ function CamerasView() {
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {cameras?.map((camera) => (
-          <div key={camera._id} className="bg-white p-6 rounded-lg shadow">
+          <div key={camera._id} className="glass-strong p-6 rounded-xl border border-white/10 hover:border-cyan-500/30 transition-all hover:shadow-glow group">
             <div className="flex justify-between items-start mb-3">
-              <h3 className="text-lg font-semibold">{camera.name}</h3>
+              <div>
+                <h3 className="text-lg font-bold text-white group-hover:text-cyan-300 transition-colors">{camera.name}</h3>
+                <p className="text-xs text-gray-500 mt-1 font-mono">{camera._id}</p>
+              </div>
               <div className="flex gap-2 items-center">
-                <span className={`px-2 py-1 rounded text-xs font-medium ${
-                  camera.isActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
+                <span className={`px-3 py-1 rounded-lg text-xs font-semibold ${
+                  camera.isActive 
+                    ? "bg-green-500/20 text-green-300 border border-green-500/30" 
+                    : "bg-gray-500/20 text-gray-400 border border-gray-500/30"
                 }`}>
-                  {camera.isActive ? "Active" : "Inactive"}
+                  {camera.isActive ? "● ACTIVE" : "○ INACTIVE"}
                 </span>
-                <button onClick={() => setSelectedCameraId(camera._id)} className="text-blue-600 hover:text-blue-800 text-sm" title="View analysis">📊</button>
-                <button onClick={() => deleteCamera({ cameraId: camera._id })} className="text-red-600 hover:text-red-800 text-sm" title="Delete">🗑️</button>
+                <button 
+                  onClick={() => setSelectedCameraId(camera._id)} 
+                  className="text-blue-400 hover:text-blue-300 text-lg transition-colors" 
+                  title="View analysis"
+                >
+                  📊
+                </button>
+                <button 
+                  onClick={() => deleteCamera({ cameraId: camera._id })} 
+                  className="text-red-400 hover:text-red-300 text-lg transition-colors" 
+                  title="Delete"
+                >
+                  🗑️
+                </button>
               </div>
             </div>
-            <div className="space-y-2 text-sm text-gray-600">
-              <div>
-                <span className="font-medium">Location:</span> {camera.location}
+            <div className="space-y-3 text-sm">
+              <div className="flex items-start gap-2">
+                <span className="text-purple-400">📍</span>
+                <div>
+                  <span className="font-semibold text-gray-400">Location:</span>
+                  <span className="text-gray-300 ml-2">{camera.location}</span>
+                </div>
               </div>
-              <div className="text-xs break-all">
-                <span className="font-medium">Stream:</span> {camera.streamUrl}
+              <div className="flex items-start gap-2">
+                <span className="text-cyan-400">🔗</span>
+                <div className="flex-1 min-w-0">
+                  <span className="font-semibold text-gray-400">Stream:</span>
+                  <p className="text-xs text-gray-500 mt-1 break-all font-mono">{camera.streamUrl}</p>
+                </div>
               </div>
             </div>
           </div>
         ))}
         {cameras?.length === 0 && (
-          <div className="col-span-3 text-center py-12 text-gray-500">
-            No cameras yet. Add one to get started.
+          <div className="col-span-3 glass p-12 rounded-xl border border-white/10 text-center">
+            <div className="text-6xl mb-4">📹</div>
+            <p className="text-xl text-gray-400">No cameras yet</p>
+            <p className="text-gray-500 mt-2">Add a camera feed to get started</p>
           </div>
         )}
       </div>

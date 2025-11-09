@@ -1,10 +1,7 @@
-"use node";
-
 import { v } from "convex/values";
 import { internalAction, internalMutation, internalQuery } from "../_generated/server";
 import { internal } from "../_generated/api";
 import { Id } from "../_generated/dataModel";
-import crypto from "crypto";
 
 /**
  * Configuration for frame processing
@@ -517,7 +514,14 @@ export const cleanupOldData = internalMutation({
  * Utility: Hash a frame for deduplication
  */
 function hashFrame(frameData: string): string {
-  return crypto.createHash("sha256").update(frameData).digest("hex");
+  // Simple hash function for V8 runtime (without Node.js crypto)
+  let hash = 0;
+  for (let i = 0; i < frameData.length; i++) {
+    const char = frameData.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  return hash.toString(36);
 }
 
 /**
