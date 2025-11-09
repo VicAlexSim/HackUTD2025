@@ -51,7 +51,11 @@ const applicationTables = {
     location: v.string(),
     isActive: v.boolean(),
     assignedTechnicianId: v.optional(v.id("technicians")),
-  }).index("by_active", ["isActive"]),
+    autoAnalyze: v.optional(v.boolean()), // Enable automatic frame analysis
+    analyzeIntervalSeconds: v.optional(v.number()), // Seconds between captures (default: 30)
+    lastAnalyzedAt: v.optional(v.number()), // Timestamp of last analysis
+  }).index("by_active", ["isActive"])
+    .index("by_auto_analyze", ["autoAnalyze", "isActive"]),
 
   // Vision Analysis Results
   visionAnalysis: defineTable({
@@ -125,6 +129,58 @@ const applicationTables = {
     timestamp: v.number(),
     agentType: v.string(),
   }).index("by_ticket", ["ticketId"]),
+
+  // Frame Cache for deduplication and caching
+  frameCache: defineTable({
+    cameraId: v.id("cameraFeeds"),
+    frameHash: v.string(), // SHA-256 hash of frame data
+    timestamp: v.number(),
+    analysisId: v.optional(v.id("visionAnalysis")), // Reference to cached analysis
+    hitCount: v.number(), // Track cache hits
+  })
+    .index("by_camera_and_hash", ["cameraId", "frameHash"])
+    .index("by_timestamp", ["timestamp"]),
+
+  // Frame Queue for batch processing
+  frameQueue: defineTable({
+    cameraId: v.id("cameraFeeds"),
+    frameData: v.string(), // base64 encoded
+    frameHash: v.string(),
+    timestamp: v.number(),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("processing"),
+      v.literal("completed"),
+      v.literal("failed")
+    ),
+    batchId: v.optional(v.string()), // Group frames into batches
+    priority: v.number(), // Higher priority = process sooner
+  })
+    .index("by_status", ["status"])
+    .index("by_camera_and_status", ["cameraId", "status"])
+    .index("by_batch", ["batchId"]),
+
+  // Batch Processing Jobs
+  processingBatches: defineTable({
+    batchId: v.string(),
+    cameraId: v.id("cameraFeeds"),
+    frameCount: v.number(),
+    status: v.union(
+      v.literal("queued"),
+      v.literal("processing"),
+      v.literal("completed"),
+      v.literal("failed")
+    ),
+    startedAt: v.optional(v.number()),
+    completedAt: v.optional(v.number()),
+    results: v.optional(v.array(v.object({
+      frameHash: v.string(),
+      analysisId: v.id("visionAnalysis"),
+      detectedIssues: v.number(),
+    }))),
+  })
+    .index("by_status", ["status"])
+    .index("by_camera", ["cameraId"]),
 };
 
 export default defineSchema({

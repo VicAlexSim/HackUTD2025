@@ -55,16 +55,38 @@ A sophisticated multi-agent system for maintenance operations featuring:
 ## API Endpoints
 
 ### `/api/analyze-frame` (POST)
-Send camera frames for vision analysis:
+Send camera frames for vision analysis with intelligent caching and batching:
 ```json
 {
   "cameraId": "camera_id",
-  "frameData": "base64_encoded_image"
+  "frameData": "base64_encoded_image",
+  "priority": 5
 }
 ```
 
+**Features:**
+- ✅ Automatic deduplication using SHA-256 hashing
+- ✅ Smart caching (24-hour cache lifetime)
+- ✅ Batch processing (5 frames at a time)
+- ✅ Similarity detection (skips near-identical frames)
+- ✅ Priority queue for urgent frames
+
 ### `/api/assign-tickets` (POST)
 Trigger coordinator to assign pending tickets to available technicians.
+
+### `/api/process-batch` (POST)
+Manually trigger batch processing for a specific camera:
+```json
+{
+  "cameraId": "camera_id"
+}
+```
+
+### `/api/cache-stats` (GET)
+Get frame processing statistics:
+- Cache hit rate
+- Queue depth
+- Batch processing status
 
 ## Environment Variables
 
@@ -79,25 +101,48 @@ Required:
 3. **Add Documentation** - Upload SOPs and safety guides
 4. **Monitor Dashboard** - View tickets, technicians, and camera status
 
-### Camera Integration
+### Camera Integration & Frame Extraction
 
-**Important**: The system does NOT automatically analyze video streams. You need to:
+The system includes powerful frame extraction tools with intelligent caching and batching!
 
-1. Extract frames from your video source (using ffmpeg, OpenCV, or similar)
-2. Convert frames to base64
-3. Send them to the API endpoint
+#### 🚀 Quick Start (Python)
+```bash
+pip install opencv-python requests yt-dlp pillow
 
-Example with curl:
+python scripts/extract-frames.py \
+  --youtube "https://youtube.com/watch?v=..." \
+  --camera-id "k17abc123..." \
+  --api-url "https://accurate-marlin-326.convex.site" \
+  --fps 0.5 \
+  --priority 5
+```
+
+#### 🚀 Quick Start (Node.js)
+```bash
+npm install fluent-ffmpeg axios
+
+node scripts/extract-frames.js \
+  --video "datacenter-footage.mp4" \
+  --camera-id "k17abc123..." \
+  --api-url "https://accurate-marlin-326.convex.site"
+```
+
+#### Manual API Call
 ```bash
 curl -X POST https://accurate-marlin-326.convex.site/api/analyze-frame \
   -H "Content-Type: application/json" \
   -d '{
     "cameraId": "your_camera_id_here",
-    "frameData": "base64_encoded_image_data"
+    "frameData": "base64_encoded_image_data",
+    "priority": 5
   }'
 ```
 
-**YouTube Videos**: You can add YouTube URLs as camera feeds. The video will play in the Vision Analysis modal, but you still need to extract and send frames manually for AI analysis.
+**📖 Detailed Guides:**
+- [`QUICK_START_FRAMES.md`](QUICK_START_FRAMES.md) - Get started in 5 minutes
+- [`FRAME_PROCESSING.md`](FRAME_PROCESSING.md) - Complete documentation
+
+**YouTube Videos**: You can add YouTube URLs as camera feeds. The video will play in the Vision Analysis modal. Use the extraction scripts to send frames for AI analysis.
 
 ### Automatic Ticket Creation
 
