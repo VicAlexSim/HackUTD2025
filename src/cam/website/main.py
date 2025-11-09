@@ -23,10 +23,10 @@ def first_req():
         try:
             ctrl = initialize_cam()
             con = start_stream_capture(ctrl)
-        except:
+        except Exception as e:
             print("dang")
+            print(e)
             #close_cam(ctrl[1])
-        first = False
 
 
 # Function to generate video frames from the camera
@@ -94,5 +94,5 @@ def video_feed():
 
 # Run the Flask app
 if __name__ == "__main__":
-    app.run(debug=True, port=8080)
+    app.run(debug=True, host="0.0.0.0", port=8080)
     
