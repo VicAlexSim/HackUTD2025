@@ -1,0 +1,95 @@
+from abc import ABC, abstractmethod
+from typing import List, Dict, Any, Optional
+import json
+import socket
+import struct
+
+try:  # Optional dependencies for visualization
+    import cv2
+    import numpy as np
+except ImportError:  # pragma: no cover - optional dependency
+    cv2 = None
+    np = None
+
+def start_stream_capture(
+    self,
+    port: int = 9000,
+    host: str = "",
+    remote_host: Optional[str] = None,
+    remote_port: int = 9000,
+    window_name: str = "Voxel Stream",
+    connect_timeout: float = 10.0,
+) -> None:
+    """Start streaming from the device and visualize frames locally.
+
+    :param port: Local TCP port to listen on for incoming frames.
+    :param host: Local interface to bind (default all interfaces).
+    :param remote_host: Optional explicit remote address to push to. If
+        None, the device is instructed to push to our current LAN IP.
+    :param remote_port: Port the device should connect back to (defaults to
+        the same as the local listener port).
+    :param window_name: OpenCV window title.
+    :param connect_timeout: Seconds to wait for the device to connect.
+    """
+
+    if not self.is_connected():
+        raise ConnectionError("Connect to the device first")
+
+    if cv2 is None or np is None:
+        raise RuntimeError("OpenCV (cv2) and numpy are required for stream visualization. Install them with `pip install opencv-python numpy`." )
+
+    listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    listener.bind((host, port))
+    listener.listen(1)
+
+    target_port = remote_port or port
+    target_host = self._select_stream_target(remote_host, target_port)
+
+    # Kick off streaming on device
+    response = self.start_rdmp_stream(target_host, target_port)
+    if "error" in response:
+        listener.close()
+        raise RuntimeError(f"Device failed to start streaming: {response}")
+
+    listener.settimeout(connect_timeout)
+    try:
+        conn, addr = listener.accept()
+    except socket.timeout:
+        listener.close()
+        self.stop_rdmp_stream()
+        raise TimeoutError("Timed out waiting for stream connection from device")
+
+    listener.close()
+    conn.settimeout(5.0)
+
+    print(f"Streaming from device connected: {addr}")
+
+    return conn
+
+def get_frame(self, conn):
+    header = self._recv_exact(conn, 8)
+    if not header:
+        print("Stream closed by device")
+        return
+
+    if header[:4] != b"VXL0":
+        print("Invalid frame header, stopping")
+        return
+
+    frame_len = struct.unpack(">I", header[4:])[0]
+    if frame_len <= 0 or frame_len > 5 * 1024 * 1024:
+        print(f"Invalid frame length: {frame_len}")
+        return
+
+    payload = self._recv_exact(conn, frame_len)
+    if not payload:
+        print("Failed to read frame payload")
+        return
+
+    frame_array = np.frombuffer(payload, dtype=np.uint8)
+    
+    return frame_array
+
+def close_stream(self):
+    self.stop_rdmp_stream()

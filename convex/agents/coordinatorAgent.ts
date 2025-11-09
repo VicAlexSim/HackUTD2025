@@ -16,7 +16,7 @@ export const assignTickets = internalAction({
     }
 
     // Sort tickets by priority
-    const sortedTickets = pendingTickets.sort((a, b) => {
+    const sortedTickets = pendingTickets.sort((a: any, b: any) => {
       const priorityOrder: Record<string, number> = { critical: 4, high: 3, medium: 2, low: 1 };
       return priorityOrder[b.priority] - priorityOrder[a.priority];
     });
@@ -37,7 +37,7 @@ export const assignTickets = internalAction({
         });
         
         // Remove from available list
-        const index = availableTechs.findIndex(t => t._id === bestTech._id);
+        const index = availableTechs.findIndex((t: any) => t._id === bestTech._id);
         if (index > -1) {
           availableTechs.splice(index, 1);
         }

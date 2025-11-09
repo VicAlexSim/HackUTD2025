@@ -10,6 +10,13 @@ export const analyzeFrame = internalAction({
     frameData: v.string(), // base64 encoded image
   },
   handler: async (ctx, args): Promise<{ analysis: string; detectedIssues: string[]; requiresAction: boolean }> => {
+    // Check if API key is configured
+    const apiKey = process.env.OPENROUTER_API_KEY;
+    if (!apiKey) {
+      console.error("❌ OPENROUTER_API_KEY not set in environment variables");
+      throw new Error("OPENROUTER_API_KEY not configured. Please add it in your Convex dashboard: Settings → Environment Variables");
+    }
+
     // Get camera context and memory
     const memory = await ctx.runQuery(internal.agents.memory.getMemory, {
       agentType: "vision",

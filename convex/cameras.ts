@@ -84,3 +84,36 @@ export const getVisionAnalysis = query({
       .take(10);
   },
 });
+
+export const toggleAutoAnalysis = mutation({
+  args: {
+    cameraId: v.id("cameraFeeds"),
+    enabled: v.boolean(),
+    intervalSeconds: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    if (args.enabled) {
+      await ctx.db.patch(args.cameraId, {
+        autoAnalyze: true,
+        analyzeIntervalSeconds: args.intervalSeconds || 30,
+        lastAnalyzedAt: 0,
+      });
+    } else {
+      await ctx.db.patch(args.cameraId, {
+        autoAnalyze: false,
+      });
+    }
+  },
+});
+
+export const updateAnalysisInterval = mutation({
+  args: {
+    cameraId: v.id("cameraFeeds"),
+    intervalSeconds: v.number(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.cameraId, {
+      analyzeIntervalSeconds: args.intervalSeconds,
+    });
+  },
+});
