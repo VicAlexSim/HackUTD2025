@@ -12,7 +12,7 @@ except ImportError:  # pragma: no cover - optional dependency
     np = None
 
 def start_stream_capture(
-    self,
+    _self,
     port: int = 9000,
     host: str = "",
     remote_host: Optional[str] = None,
@@ -20,6 +20,7 @@ def start_stream_capture(
     window_name: str = "Voxel Stream",
     connect_timeout: float = 10.0,
 ) -> None:
+    self=_self[0]
     """Start streaming from the device and visualize frames locally.
 
     :param port: Local TCP port to listen on for incoming frames.
@@ -40,7 +41,10 @@ def start_stream_capture(
 
     listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    listener.bind((host, port))
+    try:
+        listener.bind((host, port))
+    except:
+        print("bad binding")
     listener.listen(1)
 
     target_port = remote_port or port
@@ -56,9 +60,9 @@ def start_stream_capture(
     try:
         conn, addr = listener.accept()
     except socket.timeout:
-        listener.close()
-        self.stop_rdmp_stream()
-        raise TimeoutError("Timed out waiting for stream connection from device")
+        #listener.close()
+        #self.stop_rdmp_stream()
+        print("Timed out waiting for stream connection from device")
 
     listener.close()
     conn.settimeout(5.0)
@@ -67,7 +71,8 @@ def start_stream_capture(
 
     return conn
 
-def get_frame(self, conn):
+def get_frame(_self, conn):
+    self = _self[0]
     header = self._recv_exact(conn, 8)
     if not header:
         print("Stream closed by device")
@@ -75,6 +80,10 @@ def get_frame(self, conn):
 
     if header[:4] != b"VXL0":
         print("Invalid frame header, stopping")
+        print(header)
+        self._recv_exact(conn, 1024)
+        self.stop_rdmp_stream()
+        start_stream_capture(_self)                
         return
 
     frame_len = struct.unpack(">I", header[4:])[0]

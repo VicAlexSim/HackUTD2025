@@ -12,19 +12,20 @@ from cams.bt2 import initialize_cam, close_cam
 
 # Create a Flask app instance
 app = Flask(__name__, static_url_path='/static')
-
+con = None
 # Set to keep track of RTCPeerConnection instances
 pcs = set()
-first = True
 @app.before_request
 def first_req():
-    global first
     global ctrl
-    if first:
+    global con
+    if con is None:
         try:
             ctrl = initialize_cam()
+            con = start_stream_capture(ctrl)
         except:
-            close_cam(ctrl[1])
+            print("dang")
+            #close_cam(ctrl[1])
         first = False
 
 
@@ -32,13 +33,16 @@ def first_req():
 def generate_frames():
     while True:
         start_time = time.time()
-        buffer = get_frame(ctrl[0], con)
-        frame = buffer.tobytes()
-        # Concatenate frame and yield for streaming
-        yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n') 
-        elapsed_time = time.time() - start_time
-        logging.debug(f"Frame generation time: {elapsed_time} seconds")
+        global con
+        global ctrl
+        if con is not None:
+            buffer = get_frame(ctrl, con)
+            frame = buffer.tobytes()
+            # Concatenate frame and yield for streaming
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n') 
+            elapsed_time = time.time() - start_time
+            logging.debug(f"Frame generation time: {elapsed_time} seconds")
 
 # Route to render the HTML template
 @app.route('/')
@@ -86,8 +90,6 @@ def offer_route():
 # Route to stream video frames
 @app.route('/video_feed')
 def video_feed():
-    global con
-    con = start_stream_capture(ctrl[0])
     return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 # Run the Flask app
