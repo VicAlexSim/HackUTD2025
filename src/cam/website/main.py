@@ -61,7 +61,13 @@ def first_req():
             except Exception as e:
                 print("dang")
                 print(e)
-                #close_cam(ctrl[1])
+                try:
+                    close_cam(ctrl[1])
+                except:
+                    print("can't close")
+                first=True
+                con = None
+                first_req()
 
 
 # Function to generate video frames from the camera
