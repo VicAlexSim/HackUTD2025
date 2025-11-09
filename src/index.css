@@ -3,11 +3,15 @@
 @tailwind utilities;
 
 :root {
-  --color-light: #ffffff;
-  --color-dark: #0a0a0f;
-  --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-  --gradient-accent: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  /* Always dark theme - no light mode switching */
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  --accent-primary: #64A8F0;
+  --accent-hover: #4A86C8;
+  --surface-tint: #F5F5F5;
+  --gradient-primary: linear-gradient(135deg, #64A8F0 0%, #4A86C8 100%);
+  --gradient-secondary: linear-gradient(135deg, #667a8a 0%, #8b9cb0 100%);
+  --gradient-accent: linear-gradient(135deg, #64A8F0 0%, #5A9AE0 100%);
   --gradient-dark: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
 }
 
@@ -26,43 +30,53 @@ body {
     Roboto,
     "Helvetica Neue",
     Arial,
-    "Noto Sans",
+    Helvetica,
     sans-serif,
     "Apple Color Emoji",
     "Segoe UI Emoji",
     "Segoe UI Symbol",
     "Noto Color Emoji";
-  color: #e5e7eb;
-  background: #0a0a0f;
+  color: var(--foreground);
+  background: var(--background);
   background-image: 
-    radial-gradient(at 0% 0%, rgba(102, 126, 234, 0.1) 0px, transparent 50%),
-    radial-gradient(at 100% 0%, rgba(118, 75, 162, 0.1) 0px, transparent 50%),
-    radial-gradient(at 100% 100%, rgba(79, 172, 254, 0.1) 0px, transparent 50%),
-    radial-gradient(at 0% 100%, rgba(245, 87, 108, 0.1) 0px, transparent 50%);
+    radial-gradient(at 0% 0%, rgba(100, 168, 240, 0.08) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(74, 134, 200, 0.08) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(100, 168, 240, 0.06) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, rgba(90, 154, 224, 0.06) 0px, transparent 50%);
   min-height: 100vh;
 }
 
 /* Gradient text effect */
 .gradient-text {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #64A8F0 0%, #5A9AE0 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-/* Glass morphism effect */
+/* Glassy white text effect */
+.glassy-text {
+  color: #ffffff;
+  text-shadow: 
+    0 0 10px rgba(255, 255, 255, 0.3),
+    0 0 20px rgba(255, 255, 255, 0.2),
+    0 0 30px rgba(255, 255, 255, 0.1),
+    0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Glass morphism effect - matching the reference project */
 .glass {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: rgba(245, 245, 245, 0.05);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .glass-strong {
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(245, 245, 245, 0.05);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 /* Gradient border effect */
@@ -78,7 +92,7 @@ body {
   inset: 0;
   border-radius: 12px;
   padding: 1px;
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, #64A8F0, #4A86C8);
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
@@ -98,32 +112,32 @@ body {
 }
 
 .animated-gradient {
-  background: linear-gradient(270deg, #667eea, #764ba2, #f093fb, #4facfe);
+  background: linear-gradient(270deg, #64A8F0, #4A86C8, #5A9AE0, #64A8F0);
   background-size: 800% 800%;
   animation: gradient-shift 15s ease infinite;
 }
 
 /* only use this to update the style of the auth input fields. use a different class for all other input fields */
 .auth-input-field {
-  @apply w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/50 outline-none transition-all;
+  @apply w-full px-4 py-3 rounded-lg bg-[#F5F5F5]/5 border border-white/10 text-white placeholder-gray-500 focus:border-[#64A8F0] focus:ring-2 focus:ring-[#64A8F0]/50 outline-none transition-all;
 }
 
 /* only use this to update the style of the auth buttons. use the button class for all other buttons */
 .auth-button {
   @apply w-full px-4 py-3 rounded-lg font-semibold transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02] active:scale-[0.98];
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: #64A8F0;
+  color: #ffffff;
 }
 
 .auth-button:hover {
-  background: linear-gradient(135deg, #5568d3 0%, #6a3f8f 100%);
+  background: #4A86C8;
 }
 
 /* Glow effect */
 .glow {
-  box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 0 20px rgba(100, 168, 240, 0.3);
 }
 
 .glow-hover:hover {
-  box-shadow: 0 0 30px rgba(102, 126, 234, 0.5);
+  box-shadow: 0 0 30px rgba(100, 168, 240, 0.5);
 }

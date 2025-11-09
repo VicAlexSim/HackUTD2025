@@ -2,34 +2,93 @@ import { Authenticated, Unauthenticated, useQuery, useMutation } from "convex/re
 import { api } from "../convex/_generated/api";
 import { SignInForm } from "./SignInForm";
 import { SignOutButton } from "./SignOutButton";
+import { LandingPage } from "./LandingPage";
 import { Toaster } from "sonner";
 import { useState } from "react";
 import { Id } from "../convex/_generated/dataModel";
+import logo from "./logo.jpg";
+import { 
+  FiFileText as FiTicket, 
+  FiUsers, 
+  FiVideo, 
+  FiActivity, 
+  FiTrash2, 
+  FiX, 
+  FiPlus,
+  FiMapPin,
+  FiLink,
+  FiBarChart2,
+  FiCheckCircle
+} from "react-icons/fi";
+
+type Page = "tickets" | "technicians" | "cameras" | "activity";
 
 export default function App() {
+  const loggedInUser = useQuery(api.auth.loggedInUser);
+  const [activePage, setActivePage] = useState<Page>("tickets");
+
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="sticky top-0 z-10 glass-strong h-16 flex justify-between items-center border-b border-white/10 px-6">
-        <h2 className="text-2xl font-bold gradient-text">Technician Vision AI</h2>
-        <SignOutButton />
-      </header>
-      <main className="flex-1 p-8">
-        <Content />
+      {loggedInUser && (
+        <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-black/5 border-b border-white/10">
+          <div className="w-full px-6 py-2 flex items-center justify-between">
+            {/* Logo and Brand */}
+            <div className="flex items-center gap-3">
+              <img src={logo} alt="Kramhtron.ai" className="h-16 w-auto rounded-lg" />
+              <span className="text-2xl font-bold glassy-text">Kramhtron.ai</span>
+            </div>
+
+            {/* Navigation Links */}
+            <div className="hidden md:flex items-center gap-6">
+              <button 
+                onClick={() => setActivePage("tickets")}
+                className={`glassy-text hover:text-white transition-colors font-medium text-sm ${activePage === "tickets" ? "text-white" : ""}`}
+              >
+                Tickets
+              </button>
+              <button 
+                onClick={() => setActivePage("technicians")}
+                className={`glassy-text hover:text-white transition-colors font-medium text-sm ${activePage === "technicians" ? "text-white" : ""}`}
+              >
+                Technicians
+              </button>
+              <button 
+                onClick={() => setActivePage("cameras")}
+                className={`glassy-text hover:text-white transition-colors font-medium text-sm ${activePage === "cameras" ? "text-white" : ""}`}
+              >
+                Cameras
+              </button>
+              <button 
+                onClick={() => setActivePage("activity")}
+                className={`glassy-text hover:text-white transition-colors font-medium text-sm ${activePage === "activity" ? "text-white" : ""}`}
+              >
+                Activity
+              </button>
+            </div>
+
+            {/* Sign Out Button */}
+            <SignOutButton />
+          </div>
+        </header>
+      )}
+      <main className={`flex-1 ${loggedInUser ? 'p-8 pt-24' : ''}`}>
+        <Content activePage={activePage} />
       </main>
       <Toaster theme="dark" />
     </div>
   );
 }
 
-function Content() {
+function Content({ activePage }: { activePage: Page }) {
   const loggedInUser = useQuery(api.auth.loggedInUser);
+  const [showAuth, setShowAuth] = useState(false);
 
   if (loggedInUser === undefined) {
     return (
       <div className="flex justify-center items-center min-h-[60vh]">
         <div className="relative">
-          <div className="animate-spin rounded-full h-16 w-16 border-4 border-purple-500/20 border-t-purple-500"></div>
-          <div className="absolute inset-0 rounded-full bg-purple-500/20 blur-xl"></div>
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-gray-500/20 border-t-gray-400"></div>
+          <div className="absolute inset-0 rounded-full bg-gray-400/20 blur-xl"></div>
         </div>
       </div>
     );
@@ -38,80 +97,43 @@ function Content() {
   return (
     <div className="flex flex-col gap-8">
       <Authenticated>
-        <Dashboard />
+        <Dashboard activePage={activePage} />
       </Authenticated>
       <Unauthenticated>
-        <div className="max-w-md mx-auto mt-12">
-          <div className="text-center mb-10">
-            <h1 className="text-5xl font-bold gradient-text mb-4">Multi-Agent Maintenance System</h1>
-            <p className="text-xl text-gray-400">Sign in to access the dashboard</p>
+        {!showAuth ? (
+          <LandingPage 
+            onGetStarted={() => setShowAuth(true)} 
+            onLogin={() => setShowAuth(true)}
+          />
+        ) : (
+          <div className="max-w-md mx-auto mt-12">
+            <button
+              onClick={() => setShowAuth(false)}
+              className="mb-6 text-gray-400 hover:text-white flex items-center gap-2 transition-colors"
+            >
+              <span>←</span> Back to home
+            </button>
+            <div className="text-center mb-10">
+              <h1 className="text-5xl font-bold gradient-text mb-4">Welcome to Kramhtron.ai</h1>
+              <p className="text-xl text-gray-400">Sign in to access the dashboard</p>
+            </div>
+            <div className="glass-strong p-8 rounded-2xl border border-white/10 shadow-glow">
+              <SignInForm />
+            </div>
           </div>
-          <div className="glass-strong p-8 rounded-2xl border border-white/10 shadow-glow">
-            <SignInForm />
-          </div>
-        </div>
+        )}
       </Unauthenticated>
     </div>
   );
 }
 
-function Dashboard() {
-  const [activeTab, setActiveTab] = useState<"tickets" | "technicians" | "cameras" | "docs">("tickets");
-
+function Dashboard({ activePage }: { activePage: Page }) {
   return (
     <div className="max-w-7xl mx-auto">
-      <div className="mb-10">
-        <h1 className="text-4xl font-bold gradient-text mb-3">Maintenance Control Center</h1>
-        <p className="text-lg text-gray-400">Multi-agent system with vision AI, voice guidance, and autonomous ticket management</p>
-      </div>
-
-      <div className="glass p-1 rounded-xl mb-8 inline-flex gap-1">
-        <button
-          onClick={() => setActiveTab("tickets")}
-          className={`px-6 py-3 font-semibold rounded-lg transition-all ${
-            activeTab === "tickets"
-              ? "bg-gradient-primary text-white shadow-glow"
-              : "text-gray-400 hover:text-white hover:bg-white/5"
-          }`}
-        >
-          🎫 Tickets
-        </button>
-        <button
-          onClick={() => setActiveTab("technicians")}
-          className={`px-6 py-3 font-semibold rounded-lg transition-all ${
-            activeTab === "technicians"
-              ? "bg-gradient-primary text-white shadow-glow"
-              : "text-gray-400 hover:text-white hover:bg-white/5"
-          }`}
-        >
-          👷 Technicians
-        </button>
-        <button
-          onClick={() => setActiveTab("cameras")}
-          className={`px-6 py-3 font-semibold rounded-lg transition-all ${
-            activeTab === "cameras"
-              ? "bg-gradient-primary text-white shadow-glow"
-              : "text-gray-400 hover:text-white hover:bg-white/5"
-          }`}
-        >
-          📹 Cameras
-        </button>
-        <button
-          onClick={() => setActiveTab("docs")}
-          className={`px-6 py-3 font-semibold rounded-lg transition-all ${
-            activeTab === "docs"
-              ? "bg-gradient-primary text-white shadow-glow"
-              : "text-gray-400 hover:text-white hover:bg-white/5"
-          }`}
-        >
-          Documentation
-        </button>
-      </div>
-
-      {activeTab === "tickets" && <TicketsView />}
-      {activeTab === "technicians" && <TechniciansView />}
-      {activeTab === "cameras" && <CamerasView />}
-      {activeTab === "docs" && <DocumentsView />}
+      {activePage === "tickets" && <TicketsView />}
+      {activePage === "technicians" && <TechniciansView />}
+      {activePage === "cameras" && <CamerasView />}
+      {activePage === "activity" && <ActivityView />}
     </div>
   );
 }
@@ -163,9 +185,9 @@ function TicketsView() {
         <h2 className="text-3xl font-bold text-white">Tickets</h2>
         <button
           onClick={() => setShowForm(!showForm)}
-          className="px-6 py-3 bg-gradient-primary text-white rounded-lg hover:shadow-glow transition-all font-semibold transform hover:scale-105"
+          className="px-6 py-3 bg-gradient-primary text-white rounded-lg hover:shadow-glow transition-all font-semibold transform hover:scale-105 flex items-center gap-2"
         >
-          {showForm ? "✕ Cancel" : "+ Create Ticket"}
+          {showForm ? <><FiX /> Cancel</> : <><FiPlus /> Create Ticket</>}
         </button>
       </div>
 
@@ -178,7 +200,7 @@ function TicketsView() {
                 name="title"
                 type="text"
                 required
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/50 outline-none transition-all"
+                className="w-full px-4 py-3 bg-[#F5F5F5]/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:border-[#64A8F0] focus:ring-2 focus:ring-[#64A8F0]/50 outline-none transition-all"
                 placeholder="Enter ticket title..."
               />
             </div>
@@ -188,7 +210,7 @@ function TicketsView() {
                 name="description"
                 required
                 rows={3}
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/50 outline-none transition-all resize-none"
+                className="w-full px-4 py-3 bg-[#F5F5F5]/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:border-[#64A8F0] focus:ring-2 focus:ring-[#64A8F0]/50 outline-none transition-all resize-none"
                 placeholder="Describe the issue..."
               />
             </div>
@@ -197,7 +219,7 @@ function TicketsView() {
               <select
                 name="priority"
                 required
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:border-purple-500 focus:ring-2 focus:ring-purple-500/50 outline-none transition-all"
+                className="w-full px-4 py-3 bg-[#F5F5F5]/5 border border-white/10 rounded-lg text-white focus:border-[#64A8F0] focus:ring-2 focus:ring-[#64A8F0]/50 outline-none transition-all"
               >
                 <option value="low" className="bg-dark-card">Low</option>
                 <option value="medium" className="bg-dark-card">Medium</option>
@@ -217,9 +239,9 @@ function TicketsView() {
 
       <div className="grid gap-4">
         {tickets?.map((ticket) => (
-          <div key={ticket._id} className="glass-strong p-6 rounded-xl border border-white/10 hover:border-purple-500/30 transition-all hover:shadow-glow group">
+          <div key={ticket._id} className="glass-strong p-6 rounded-xl border border-white/10 hover:border-[#64A8F0]/20 transition-all hover:shadow-glow group">
             <div className="flex justify-between items-start mb-3">
-              <h3 className="text-xl font-bold text-white group-hover:text-purple-300 transition-colors">{ticket.title}</h3>
+              <h3 className="text-xl font-bold text-white group-hover:text-gray-300 transition-colors">{ticket.title}</h3>
               <div className="flex gap-2 items-center">
                 <span className={`px-3 py-1 rounded-lg text-xs font-semibold ${getPriorityColor(ticket.priority)}`}>
                   {ticket.priority.toUpperCase()}
@@ -232,19 +254,19 @@ function TicketsView() {
                   className="text-red-400 hover:text-red-300 text-lg transition-colors ml-2"
                   title="Delete ticket"
                 >
-                  🗑️
+                  <FiTrash2 />
                 </button>
               </div>
             </div>
             <p className="text-gray-400 mb-4 leading-relaxed">{ticket.description}</p>
             <div className="flex justify-between items-center text-sm text-gray-500">
               <span className="flex items-center gap-2">
-                <span className="text-purple-400">👤</span>
+                <FiUsers className="text-gray-400" />
                 Created by: <span className="text-gray-300">{ticket.createdBy}</span>
               </span>
               {ticket.technician && (
                 <span className="flex items-center gap-2">
-                  <span className="text-blue-400">👷</span>
+                  <FiUsers className="text-gray-400" />
                   Assigned to: <span className="text-gray-300">{ticket.technician.name}</span>
                 </span>
               )}
@@ -261,7 +283,7 @@ function TicketsView() {
         ))}
         {tickets?.length === 0 && (
           <div className="glass p-12 rounded-xl border border-white/10 text-center">
-            <div className="text-6xl mb-4">🎫</div>
+            <FiTicket className="text-6xl mb-4 mx-auto text-gray-600" />
             <p className="text-xl text-gray-400">No tickets yet</p>
             <p className="text-gray-500 mt-2">Create your first ticket to get started</p>
           </div>
@@ -368,14 +390,14 @@ function TechniciansView() {
                   className="text-blue-600 hover:text-blue-800 text-sm"
                   title="View voice alerts"
                 >
-                  🔊
+                  <FiActivity />
                 </button>
                 <button
                   onClick={() => deleteTechnician({ technicianId: tech._id })}
                   className="text-red-600 hover:text-red-800 text-sm"
                   title="Delete technician"
                 >
-                  🗑️
+                  <FiTrash2 />
                 </button>
               </div>
             </div>
@@ -495,9 +517,9 @@ function CamerasView() {
         <h2 className="text-3xl font-bold text-white">Camera Feeds</h2>
         <button
           onClick={() => setShowForm(!showForm)}
-          className="px-6 py-3 bg-gradient-accent text-white rounded-lg hover:shadow-glow transition-all font-semibold transform hover:scale-105"
+          className="px-6 py-3 bg-gradient-accent text-white rounded-lg hover:shadow-glow transition-all font-semibold transform hover:scale-105 flex items-center gap-2"
         >
-          {showForm ? "✕ Cancel" : "+ Add Camera"}
+          {showForm ? <><FiX /> Cancel</> : <><FiPlus /> Add Camera</>}
         </button>
       </div>
 
@@ -510,7 +532,7 @@ function CamerasView() {
                 name="name"
                 type="text"
                 required
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/50 outline-none transition-all"
+                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:border-gray-400 focus:ring-2 focus:ring-gray-400/50 outline-none transition-all"
                 placeholder="Camera name..."
               />
             </div>
@@ -521,7 +543,7 @@ function CamerasView() {
                 type="text"
                 required
                 placeholder="https://www.youtube.com/watch?v=..."
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/50 outline-none transition-all"
+                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:border-gray-400 focus:ring-2 focus:ring-gray-400/50 outline-none transition-all"
               />
             </div>
             <div>
@@ -530,7 +552,7 @@ function CamerasView() {
                 name="location"
                 type="text"
                 required
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/50 outline-none transition-all"
+                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:border-gray-400 focus:ring-2 focus:ring-gray-400/50 outline-none transition-all"
                 placeholder="Camera location..."
               />
             </div>
@@ -546,7 +568,7 @@ function CamerasView() {
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {cameras?.map((camera) => (
-          <div key={camera._id} className="glass-strong p-6 rounded-xl border border-white/10 hover:border-cyan-500/30 transition-all hover:shadow-glow group">
+          <div key={camera._id} className="glass-strong p-6 rounded-xl border border-white/10 hover:border-[#64A8F0]/20 transition-all hover:shadow-glow group">
             <div className="flex justify-between items-start mb-3">
               <div>
                 <h3 className="text-lg font-semibold">{camera.name}</h3>
@@ -565,27 +587,27 @@ function CamerasView() {
                   className="text-blue-400 hover:text-blue-300 text-lg transition-colors" 
                   title="View analysis"
                 >
-                  📊
+                  <FiBarChart2 />
                 </button>
                 <button 
                   onClick={() => deleteCamera({ cameraId: camera._id })} 
                   className="text-red-400 hover:text-red-300 text-lg transition-colors" 
                   title="Delete"
                 >
-                  🗑️
+                  <FiTrash2 />
                 </button>
               </div>
             </div>
             <div className="space-y-3 text-sm">
               <div className="flex items-start gap-2">
-                <span className="text-purple-400">📍</span>
+                <FiMapPin className="text-gray-400 mt-0.5" />
                 <div>
                   <span className="font-semibold text-gray-400">Location:</span>
                   <span className="text-gray-300 ml-2">{camera.location}</span>
                 </div>
               </div>
               <div className="flex items-start gap-2">
-                <span className="text-cyan-400">🔗</span>
+                <FiLink className="text-gray-400 mt-0.5" />
                 <div className="flex-1 min-w-0">
                   <span className="font-semibold text-gray-400">Stream:</span>
                   <p className="text-xs text-gray-500 mt-1 break-all font-mono">{camera.streamUrl}</p>
@@ -596,7 +618,7 @@ function CamerasView() {
         ))}
         {cameras?.length === 0 && (
           <div className="col-span-3 glass p-12 rounded-xl border border-white/10 text-center">
-            <div className="text-6xl mb-4">📹</div>
+            <FiVideo className="text-6xl mb-4 mx-auto text-gray-600" />
             <p className="text-xl text-gray-400">No cameras yet</p>
             <p className="text-gray-500 mt-2">Add a camera feed to get started</p>
           </div>
@@ -709,6 +731,124 @@ function VisionAnalysisModal({ cameraId, onClose }: { cameraId: Id<"cameraFeeds"
   );
 }
 
+function ActivityView() {
+  const tickets = useQuery(api.tickets.listTickets, {});
+  const cameras = useQuery(api.cameras.listCameras, {});
+
+  // Combine all activity into a single feed
+  const activities: Array<{
+    id: string;
+    type: "ticket" | "camera";
+    timestamp: number;
+    title: string;
+    description: string;
+    status?: string;
+    priority?: string;
+  }> = [];
+
+  // Add ticket activities
+  tickets?.forEach((ticket) => {
+    activities.push({
+      id: ticket._id,
+      type: "ticket",
+      timestamp: ticket._creationTime,
+      title: `Ticket: ${ticket.title}`,
+      description: ticket.description,
+      status: ticket.status,
+      priority: ticket.priority,
+    });
+  });
+
+  // Add camera activities
+  cameras?.forEach((camera) => {
+    activities.push({
+      id: camera._id,
+      type: "camera",
+      timestamp: camera._creationTime,
+      title: `Camera Added: ${camera.name}`,
+      description: `Location: ${camera.location}`,
+      status: camera.isActive ? "active" : "inactive",
+    });
+  });
+
+  // Sort by timestamp (most recent first)
+  activities.sort((a, b) => b.timestamp - a.timestamp);
+
+  const getActivityIcon = (type: string) => {
+    return type === "ticket" ? <FiTicket className="text-3xl" /> : <FiVideo className="text-3xl" />;
+  };
+
+  const getStatusColor = (status?: string) => {
+    const colors: Record<string, string> = {
+      open: "bg-blue-500/20 text-blue-300 border-blue-500/30",
+      "in-progress": "bg-yellow-500/20 text-yellow-300 border-yellow-500/30",
+      resolved: "bg-green-500/20 text-green-300 border-green-500/30",
+      closed: "bg-gray-500/20 text-gray-400 border-gray-500/30",
+      active: "bg-green-500/20 text-green-300 border-green-500/30",
+      inactive: "bg-gray-500/20 text-gray-400 border-gray-500/30",
+    };
+    return colors[status || ""] || "bg-gray-500/20 text-gray-400 border-gray-500/30";
+  };
+
+  const getPriorityColor = (priority?: string) => {
+    const colors: Record<string, string> = {
+      low: "bg-gray-500/20 text-gray-300",
+      medium: "bg-blue-500/20 text-blue-300",
+      high: "bg-orange-500/20 text-orange-300",
+      critical: "bg-red-500/20 text-red-300",
+    };
+    return colors[priority || ""] || "bg-gray-500/20 text-gray-300";
+  };
+
+  return (
+    <div>
+      <div className="mb-6">
+        <h2 className="text-3xl font-bold text-white mb-2">Activity Feed</h2>
+        <p className="text-gray-400">Recent system activity and updates</p>
+      </div>
+
+      <div className="space-y-4">
+        {activities.length === 0 ? (
+          <div className="glass p-12 rounded-xl border border-white/10 text-center">
+            <FiActivity className="text-6xl mb-4 mx-auto text-gray-600" />
+            <p className="text-xl text-gray-400">No activity yet</p>
+            <p className="text-gray-500 mt-2">Activity will appear here as you use the system</p>
+          </div>
+        ) : (
+          activities.map((activity) => (
+            <div key={activity.id} className="glass-strong p-6 rounded-xl border border-white/10 hover:border-[#64A8F0]/20 transition-all">
+              <div className="flex items-start gap-4">
+                <div>{getActivityIcon(activity.type)}</div>
+                <div className="flex-1">
+                  <div className="flex items-start justify-between mb-2">
+                    <h3 className="text-lg font-semibold text-white">{activity.title}</h3>
+                    <span className="text-xs text-gray-500">
+                      {new Date(activity.timestamp).toLocaleString()}
+                    </span>
+                  </div>
+                  <p className="text-gray-400 mb-3">{activity.description}</p>
+                  <div className="flex gap-2">
+                    {activity.status && (
+                      <span className={`px-3 py-1 rounded-lg text-xs font-semibold border ${getStatusColor(activity.status)}`}>
+                        {activity.status.toUpperCase()}
+                      </span>
+                    )}
+                    {activity.priority && (
+                      <span className={`px-3 py-1 rounded-lg text-xs font-semibold ${getPriorityColor(activity.priority)}`}>
+                        {activity.priority.toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
 function DocumentsView() {
   const documents = useQuery(api.documents.listDocuments, {});
   const createDocument = useMutation(api.documents.createDocument);
@@ -816,7 +956,7 @@ function DocumentsView() {
                 <span className={`px-2 py-1 rounded text-xs font-medium ${getCategoryColor(doc.category)}`}>
                   {doc.category}
                 </span>
-                <button onClick={() => deleteDocument({ documentId: doc._id })} className="text-red-600 hover:text-red-800 text-sm" title="Delete">🗑️</button>
+                <button onClick={() => deleteDocument({ documentId: doc._id })} className="text-red-600 hover:text-red-800 text-sm" title="Delete"><FiTrash2 /></button>
               </div>
             </div>
             <p className="text-gray-600 mb-3 line-clamp-3">{doc.content}</p>
