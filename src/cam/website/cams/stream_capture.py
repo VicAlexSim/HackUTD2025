@@ -3,6 +3,10 @@ from typing import List, Dict, Any, Optional
 import json
 import socket
 import struct
+import os
+from dotenv import load_dotenv
+
+Web_host_ip = os.getenv('Web_host_ip')
 
 try:  # Optional dependencies for visualization
     import cv2
@@ -15,10 +19,10 @@ def start_stream_capture(
     _self,
     port: int = 9000,
     host: str = "",
-    remote_host: Optional[str] = None,
+    remote_host: Optional[str] = Web_host_ip,
     remote_port: int = 9000,
     window_name: str = "Voxel Stream",
-    connect_timeout: float = 10.0,
+    connect_timeout: float = 20.0,
 ) -> None:
     self=_self[0]
     """Start streaming from the device and visualize frames locally.
@@ -65,7 +69,7 @@ def start_stream_capture(
         print("Timed out waiting for stream connection from device")
 
     listener.close()
-    conn.settimeout(5.0)
+    conn.settimeout(10.0)
 
     print(f"Streaming from device connected: {addr}")
 
