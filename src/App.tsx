@@ -529,7 +529,10 @@ function CamerasView() {
         {cameras?.map((camera) => (
           <div key={camera._id} className="bg-white p-6 rounded-lg shadow">
             <div className="flex justify-between items-start mb-3">
-              <h3 className="text-lg font-semibold">{camera.name}</h3>
+              <div>
+                <h3 className="text-lg font-semibold">{camera.name}</h3>
+                <p className="text-xs text-gray-400 mt-1">{camera._id}</p>
+              </div>
               <div className="flex gap-2 items-center">
                 <span className={`px-2 py-1 rounded text-xs font-medium ${
                   camera.isActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
