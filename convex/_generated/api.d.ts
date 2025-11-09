@@ -13,16 +13,15 @@ import type {
   FilterApi,
   FunctionReference,
 } from "convex/server";
-import type * as agenticTickets from "../agenticTickets.js";
-import type * as ai from "../ai.js";
+import type * as agents from "../agents.js";
 import type * as auth from "../auth.js";
-import type * as chat from "../chat.js";
+import type * as cameraFeeds from "../cameraFeeds.js";
+import type * as dashboard from "../dashboard.js";
 import type * as http from "../http.js";
-import type * as issues from "../issues.js";
-import type * as nemotron from "../nemotron.js";
-import type * as nemotronMutations from "../nemotronMutations.js";
+import type * as knowledgeBase from "../knowledgeBase.js";
 import type * as router from "../router.js";
-import type * as videoFeeds from "../videoFeeds.js";
+import type * as technicians from "../technicians.js";
+import type * as workOrders from "../workOrders.js";
 
 /**
  * A utility for referencing Convex functions in your app's API.
@@ -33,16 +32,15 @@ import type * as videoFeeds from "../videoFeeds.js";
  * ```
  */
 declare const fullApi: ApiFromModules<{
-  agenticTickets: typeof agenticTickets;
-  ai: typeof ai;
+  agents: typeof agents;
   auth: typeof auth;
-  chat: typeof chat;
+  cameraFeeds: typeof cameraFeeds;
+  dashboard: typeof dashboard;
   http: typeof http;
-  issues: typeof issues;
-  nemotron: typeof nemotron;
-  nemotronMutations: typeof nemotronMutations;
+  knowledgeBase: typeof knowledgeBase;
   router: typeof router;
-  videoFeeds: typeof videoFeeds;
+  technicians: typeof technicians;
+  workOrders: typeof workOrders;
 }>;
 export declare const api: FilterApi<
   typeof fullApi,
