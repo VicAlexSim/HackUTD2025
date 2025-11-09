@@ -1,66 +1,72 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
-import { getAuthUserId } from "@convex-dev/auth/server";
+import { mutation, query, internalQuery } from "./_generated/server";
 
-export const create = mutation({
+export const createTechnician = mutation({
   args: {
     name: v.string(),
     skills: v.array(v.string()),
+    location: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
-      throw new Error("Not authenticated");
-    }
-
-    return await ctx.db.insert("technicians", {
+    const technicianId = await ctx.db.insert("technicians", {
       name: args.name,
       status: "available",
       skills: args.skills,
-      isOnline: true,
+      location: args.location,
+    });
+    return technicianId;
+  },
+});
+
+export const updateTechnicianStatus = mutation({
+  args: {
+    technicianId: v.id("technicians"),
+    status: v.union(
+      v.literal("available"),
+      v.literal("busy"),
+      v.literal("offline")
+    ),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.technicianId, {
+      status: args.status,
     });
   },
 });
 
-export const list = query({
+export const listTechnicians = query({
   args: {},
   handler: async (ctx) => {
-    return await ctx.db.query("technicians").order("desc").collect();
+    const technicians = await ctx.db.query("technicians").collect();
+    
+    // Enrich with current ticket data
+    const enrichedTechnicians = await Promise.all(
+      technicians.map(async (tech) => {
+        if (tech.currentTicketId) {
+          const ticket = await ctx.db.get(tech.currentTicketId);
+          return { ...tech, currentTicket: ticket };
+        }
+        return { ...tech, currentTicket: null };
+      })
+    );
+    
+    return enrichedTechnicians;
   },
 });
 
-export const updateStatus = mutation({
-  args: {
-    id: v.id("technicians"),
-    status: v.union(v.literal("available"), v.literal("busy"), v.literal("offline")),
-    currentLocation: v.optional(v.string()),
-    currentWorkOrderId: v.optional(v.id("workOrders")),
-  },
-  handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
-      throw new Error("Not authenticated");
-    }
-
-    const updates: any = { status: args.status };
-    if (args.currentLocation !== undefined) {
-      updates.currentLocation = args.currentLocation;
-    }
-    if (args.currentWorkOrderId !== undefined) {
-      updates.currentWorkOrderId = args.currentWorkOrderId;
-    }
-
-    await ctx.db.patch(args.id, updates);
-    return null;
-  },
-});
-
-export const getAvailable = query({
+export const getAvailableTechnicians = query({
   args: {},
   handler: async (ctx) => {
     return await ctx.db
       .query("technicians")
       .withIndex("by_status", (q) => q.eq("status", "available"))
       .collect();
+  },
+});
+
+export const listTechniciansInternal = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db.query("technicians").collect();
   },
 });

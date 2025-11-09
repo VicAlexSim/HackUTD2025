@@ -1,29 +1,131 @@
-# Technician Vision AI - Multi-Agent System
-  
-This is a project built with [Chef](https://chef.convex.dev) using [Convex](https://convex.dev) as its backend.
- You can find docs about Chef with useful information like how to deploy to production [here](https://docs.convex.dev/chef).
-  
-This project is connected to the Convex deployment named [`fiery-fly-480`](https://dashboard.convex.dev/d/fiery-fly-480).
-  
-## Project structure
-  
-The frontend code is in the `app` directory and is built with [Vite](https://vitejs.dev/).
-  
-The backend code is in the `convex` directory.
-  
-`npm run dev` will start the frontend and backend servers.
+# Technician Vision AI - Multi-Agent Maintenance System
 
-## App authentication
+A sophisticated multi-agent system for maintenance operations featuring:
 
-Chef apps use [Convex Auth](https://auth.convex.dev/) with Anonymous auth for easy sign in. You may wish to change this before deploying your app.
+## Core Features
 
-## Developing and deploying your app
+### 🎥 Vision Agents
+- Multi-camera feed support with Nemotron multimodal reasoning
+- Real-time frame analysis for safety violations, equipment issues, and technician errors
+- Contextual memory for each camera feed
 
-Check out the [Convex docs](https://docs.convex.dev/) for more information on how to develop with Convex.
-* If you're new to Convex, the [Overview](https://docs.convex.dev/understanding/) is a good place to start
-* Check out the [Hosting and Deployment](https://docs.convex.dev/production/) docs for how to deploy your app
-* Read the [Best Practices](https://docs.convex.dev/understanding/best-practices/) guide for tips on how to improve you app further
+### 🎯 Supervisor Agent
+- Monitors all feeds and summarizes task progress
+- Updates tickets automatically based on observations
+- Provides system-wide oversight
 
-## HTTP API
+### 📚 RAG Agent
+- Retrieves relevant SOPs, safety docs, and repair guides
+- Dynamic document search based on detected issues
+- Context-aware guidance generation
 
-User-defined http routes are defined in the `convex/router.ts` file. We split these routes into a separate file from `convex/http.ts` to allow us to prevent the LLM from modifying the authentication routes.
+### 🎛️ Coordinator Agent
+- Prioritizes tickets based on urgency and technician availability
+- Intelligent routing based on skills and location
+- Automatic assignment optimization
+
+### 🔊 Voice Guidance (ElevenLabs)
+- Natural, low-frequency verbal feedback
+- ReAct-based decision making to avoid annoyance
+- Focuses on safety alerts and critical corrections
+
+### 🤖 Autonomous Actions
+- Automatic ticket creation when errors detected
+- Part reordering workflows
+- Self-healing system responses
+
+## Architecture
+
+### Agent Types
+1. **Vision Agent** - Analyzes camera frames using Nemotron
+2. **ReAct Agent** - Implements Reason→Act→Observe workflow
+3. **Voice Agent** - Manages ElevenLabs TTS with smart triggering
+4. **RAG Agent** - Retrieves documentation dynamically
+5. **Coordinator Agent** - Assigns and prioritizes work
+6. **Supervisor Agent** - Monitors and summarizes operations
+
+### Data Models
+- **Tickets** - Work orders with priority, status, and metadata
+- **Technicians** - Skills, status, and current assignments
+- **Camera Feeds** - Stream URLs and active monitoring
+- **Vision Analysis** - AI-detected issues and confidence scores
+- **Agent Memory** - Shared state and conversation history
+- **Documents** - SOPs, safety guides, troubleshooting steps
+
+## API Endpoints
+
+### `/api/analyze-frame` (POST)
+Send camera frames for vision analysis:
+```json
+{
+  "cameraId": "camera_id",
+  "frameData": "base64_encoded_image"
+}
+```
+
+### `/api/assign-tickets` (POST)
+Trigger coordinator to assign pending tickets to available technicians.
+
+## Environment Variables
+
+Required:
+- `OPENROUTER_API_KEY` - For Nemotron vision analysis
+- `ELEVENLABS_API_KEY` - For voice synthesis (optional)
+
+## Usage
+
+1. **Add Technicians** - Create technician profiles with skills
+2. **Add Cameras** - Register camera feeds with stream URLs
+3. **Add Documentation** - Upload SOPs and safety guides
+4. **Monitor Dashboard** - View tickets, technicians, and camera status
+
+### Camera Integration
+
+Send frames to the vision agent:
+```bash
+curl -X POST https://your-deployment.convex.site/api/analyze-frame \
+  -H "Content-Type: application/json" \
+  -d '{
+    "cameraId": "camera_id",
+    "frameData": "base64_image_data"
+  }'
+```
+
+### Automatic Ticket Creation
+
+When the vision agent detects critical issues:
+1. **Reason** - AI analyzes severity and required action
+2. **Act** - Creates ticket and/or sends voice alert
+3. **Observe** - Logs outcome and updates system state
+
+## ReAct Workflow
+
+The system uses a ReAct loop for autonomous decision-making:
+
+1. **REASON**: Analyze detected issues and determine severity
+2. **ACT**: Create tickets, send voice alerts, or request assistance
+3. **OBSERVE**: Monitor outcomes and adjust future actions
+
+## Voice Guidance Rules
+
+Voice alerts are triggered only when:
+- Safety violations detected
+- Critical errors observed
+- Less than 2 alerts in past 5 minutes (to avoid annoyance)
+
+## Scalability
+
+The modular design allows easy addition of:
+- New camera feeds (just add to database)
+- Additional agent types (extend agent framework)
+- Custom workflows (modify ReAct logic)
+- New voice channels (add to voice agent)
+
+## Development
+
+Built with:
+- **Convex** - Realtime database and backend
+- **React** - Frontend dashboard
+- **OpenRouter** - Nemotron vision AI
+- **ElevenLabs** - Text-to-speech
+- **TypeScript** - Type-safe development

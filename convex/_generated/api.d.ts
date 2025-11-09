@@ -13,15 +13,22 @@ import type {
   FilterApi,
   FunctionReference,
 } from "convex/server";
-import type * as agents from "../agents.js";
+import type * as agents_coordinatorAgent from "../agents/coordinatorAgent.js";
+import type * as agents_memory from "../agents/memory.js";
+import type * as agents_ragAgent from "../agents/ragAgent.js";
+import type * as agents_ragQueries from "../agents/ragQueries.js";
+import type * as agents_reactAgent from "../agents/reactAgent.js";
+import type * as agents_reactMutations from "../agents/reactMutations.js";
+import type * as agents_supervisorAgent from "../agents/supervisorAgent.js";
+import type * as agents_visionAgent from "../agents/visionAgent.js";
+import type * as agents_voiceAgent from "../agents/voiceAgent.js";
 import type * as auth from "../auth.js";
-import type * as cameraFeeds from "../cameraFeeds.js";
-import type * as dashboard from "../dashboard.js";
+import type * as cameras from "../cameras.js";
+import type * as documents from "../documents.js";
 import type * as http from "../http.js";
-import type * as knowledgeBase from "../knowledgeBase.js";
 import type * as router from "../router.js";
 import type * as technicians from "../technicians.js";
-import type * as workOrders from "../workOrders.js";
+import type * as tickets from "../tickets.js";
 
 /**
  * A utility for referencing Convex functions in your app's API.
@@ -32,15 +39,22 @@ import type * as workOrders from "../workOrders.js";
  * ```
  */
 declare const fullApi: ApiFromModules<{
-  agents: typeof agents;
+  "agents/coordinatorAgent": typeof agents_coordinatorAgent;
+  "agents/memory": typeof agents_memory;
+  "agents/ragAgent": typeof agents_ragAgent;
+  "agents/ragQueries": typeof agents_ragQueries;
+  "agents/reactAgent": typeof agents_reactAgent;
+  "agents/reactMutations": typeof agents_reactMutations;
+  "agents/supervisorAgent": typeof agents_supervisorAgent;
+  "agents/visionAgent": typeof agents_visionAgent;
+  "agents/voiceAgent": typeof agents_voiceAgent;
   auth: typeof auth;
-  cameraFeeds: typeof cameraFeeds;
-  dashboard: typeof dashboard;
+  cameras: typeof cameras;
+  documents: typeof documents;
   http: typeof http;
-  knowledgeBase: typeof knowledgeBase;
   router: typeof router;
   technicians: typeof technicians;
-  workOrders: typeof workOrders;
+  tickets: typeof tickets;
 }>;
 export declare const api: FilterApi<
   typeof fullApi,
