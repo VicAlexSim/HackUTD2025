@@ -7,6 +7,7 @@ import uuid
 import asyncio
 import logging
 import time
+import signal
 from cams.stream_capture import start_stream_capture, get_frame, close_stream
 from cams.bt2 import initialize_cam, close_cam
 
@@ -141,3 +142,8 @@ def video_feed():
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=8080)
     
+def signal_death(signal, frame):
+    close_cam(ctrl[1])
+    raise Exception("end of program")
+
+signal.signal(signal.SIGINT, signal_death)
