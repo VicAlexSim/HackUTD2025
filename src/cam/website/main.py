@@ -37,10 +37,11 @@ def generate_frames():
         global ctrl
         if con is not None:
             buffer = get_frame(ctrl, con)
-            frame = buffer.tobytes()
-            # Concatenate frame and yield for streaming
-            yield (b'--frame\r\n'
-                   b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n') 
+            if buffer is not None:
+                frame = buffer.tobytes()
+                # Concatenate frame and yield for streaming
+                yield (b'--frame\r\n'
+                       b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n') 
             elapsed_time = time.time() - start_time
             logging.debug(f"Frame generation time: {elapsed_time} seconds")
 
