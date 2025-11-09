@@ -3,6 +3,8 @@ import { api } from "../convex/_generated/api";
 import { SignInForm } from "./SignInForm";
 import { SignOutButton } from "./SignOutButton";
 import { LandingPage } from "./LandingPage";
+import { VoiceChat } from "./VoiceChat";
+import { LiveCallChat } from "./LiveCallChat";
 import { Toaster } from "sonner";
 import { useState, useEffect, useRef } from "react";
 import { Id } from "../convex/_generated/dataModel";
@@ -24,10 +26,14 @@ import {
   FiUser,
   FiVolume2,
   FiVolumeX,
-  FiEdit2
+  FiEdit2,
+  FiCpu,
+  FiClock,
+  FiMessageSquare,
+  FiPackage
 } from "react-icons/fi";
 
-type Page = "tickets" | "technicians" | "cameras" | "activity";
+type Page = "tickets" | "cameras" | "activity" | "inventory";
 
 export default function App() {
   const loggedInUser = useQuery(api.auth.loggedInUser);
@@ -53,12 +59,6 @@ export default function App() {
                 Tickets
               </button>
               <button 
-                onClick={() => setActivePage("technicians")}
-                className={`glassy-text hover:text-white transition-colors font-medium text-sm ${activePage === "technicians" ? "text-white" : ""}`}
-              >
-                Technicians
-              </button>
-              <button 
                 onClick={() => setActivePage("cameras")}
                 className={`glassy-text hover:text-white transition-colors font-medium text-sm ${activePage === "cameras" ? "text-white" : ""}`}
               >
@@ -69,6 +69,12 @@ export default function App() {
                 className={`glassy-text hover:text-white transition-colors font-medium text-sm ${activePage === "activity" ? "text-white" : ""}`}
               >
                 Activity
+              </button>
+              <button 
+                onClick={() => setActivePage("inventory")}
+                className={`glassy-text hover:text-white transition-colors font-medium text-sm ${activePage === "inventory" ? "text-white" : ""}`}
+              >
+                Inventory
               </button>
             </div>
 
@@ -137,9 +143,9 @@ function Dashboard({ activePage }: { activePage: Page }) {
   return (
     <div className="max-w-7xl mx-auto">
       {activePage === "tickets" && <TicketsView />}
-      {activePage === "technicians" && <TechniciansView />}
       {activePage === "cameras" && <CamerasView />}
       {activePage === "activity" && <ActivityView />}
+      {activePage === "inventory" && <InventoryView />}
     </div>
   );
 }
@@ -501,23 +507,12 @@ function CamerasView() {
   const tickets = useQuery(api.tickets.listTickets, {});
   const createCamera = useMutation(api.cameras.createCamera);
   const deleteCamera = useMutation(api.cameras.deleteCamera);
+  const fixCameraModes = useMutation(api.cameras.fixCameraModes);
+  const syncCamerasToTechnicians = useMutation(api.cameras.syncAllCamerasToTechnicians);
   const [showForm, setShowForm] = useState(false);
   const [selectedCameraId, setSelectedCameraId] = useState<Id<"cameraFeeds"> | null>(null);
   const [viewingCameraId, setViewingCameraId] = useState<Id<"cameraFeeds"> | null>(null);
   const [editingCameraId, setEditingCameraId] = useState<Id<"cameraFeeds"> | null>(null);
-  const [expandedCameras, setExpandedCameras] = useState<Set<string>>(new Set());
-
-  const toggleExpand = (cameraId: string) => {
-    setExpandedCameras(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(cameraId)) {
-        newSet.delete(cameraId);
-      } else {
-        newSet.add(cameraId);
-      }
-      return newSet;
-    });
-  };
 
   const handleCreateCamera = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -533,15 +528,52 @@ function CamerasView() {
     e.currentTarget.reset();
   };
 
+  const handleFixCameraModes = async () => {
+    try {
+      const result = await fixCameraModes({});
+      console.log('✅ Fixed camera modes:', result);
+      alert(`Updated ${result.updated} cameras:\n${result.cameras.map((c: any) => `${c.name} → ${c.mode}`).join('\n')}`);
+    } catch (error) {
+      console.error('❌ Error fixing camera modes:', error);
+      alert('Failed to fix camera modes. Check console for details.');
+    }
+  };
+
+  const handleSyncCamerasToTechnicians = async () => {
+    try {
+      const result = await syncCamerasToTechnicians({});
+      console.log('✅ Synced cameras to technicians:', result);
+      alert(`Synced ${result.synced} cameras to technicians:\n${result.technicians.map((t: any) => `${t.name} - ${t.skills.join(', ')}`).join('\n')}`);
+    } catch (error) {
+      console.error('❌ Error syncing cameras to technicians:', error);
+      alert('Failed to sync cameras to technicians. Check console for details.');
+    }
+  };
+
   return (
     <div>
-      <div className="mb-6">
+      <div className="mb-6 flex justify-between items-center">
         <h2 className="text-3xl font-bold text-white">Camera Feeds</h2>
+        <div className="flex gap-2">
+          <button
+            onClick={handleSyncCamerasToTechnicians}
+            className="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 text-blue-300 rounded-lg font-semibold text-sm transition-all hover:shadow-glow"
+            title="Sync all cameras to create/update technicians with skills"
+          >
+            🔄 Sync Technicians
+          </button>
+          <button
+            onClick={handleFixCameraModes}
+            className="px-4 py-2 bg-orange-500/20 hover:bg-orange-500/30 border border-orange-500/30 text-orange-300 rounded-lg font-semibold text-sm transition-all hover:shadow-glow"
+            title="Fix camera modes based on names (names with '2' become AI mode)"
+          >
+            🔧 Fix Camera Modes
+          </button>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {cameras?.map((camera) => {
-          const isExpanded = expandedCameras.has(camera._id);
           // Find tickets assigned to this camera/employee
           const assignedTickets = tickets?.filter(ticket => 
             ticket.metadata?.cameraId === camera._id || 
@@ -564,16 +596,6 @@ function CamerasView() {
                 </div>
                 <div className="flex flex-col gap-2 items-end">
                   <div className="flex gap-2 items-center">
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleExpand(camera._id);
-                      }}
-                      className="p-2 rounded-full glass border border-white/20 hover:border-blue-400/40 text-blue-400 hover:text-blue-300 transition-all hover:shadow-glow"
-                      title={isExpanded ? "Collapse tickets" : "View tickets"}
-                    >
-                      {isExpanded ? <FiChevronUp /> : <FiChevronDown />}
-                    </button>
                     <button 
                       onClick={(e) => {
                         e.stopPropagation();
@@ -605,13 +627,26 @@ function CamerasView() {
                       <FiTrash2 />
                     </button>
                   </div>
-                  <span className={`px-3 py-1 rounded-lg text-xs font-semibold ${
-                    camera.isActive 
-                      ? "bg-green-500/20 text-green-300 border border-green-500/30" 
-                      : "bg-gray-500/20 text-gray-400 border border-gray-500/30"
-                  }`}>
-                    {camera.isActive ? "● On Duty" : "○ Off Duty"}
-                  </span>
+                  <div className="flex flex-col gap-1">
+                    <span className={`px-3 py-1 rounded-lg text-xs font-semibold ${
+                      camera.isActive 
+                        ? "bg-green-500/20 text-green-300 border border-green-500/30" 
+                        : "bg-gray-500/20 text-gray-400 border border-gray-500/30"
+                    }`}>
+                      {camera.isActive ? "● On Duty" : "○ Off Duty"}
+                    </span>
+                    <span className={`px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 ${
+                      camera.engineerAvailable 
+                        ? "bg-blue-500/20 text-blue-300 border border-blue-500/30" 
+                        : "bg-blue-500/20 text-blue-300 border border-blue-500/30"
+                    }`}>
+                      {camera.engineerAvailable ? (
+                        <><FiUsers className="text-sm" /> Live Call</>
+                      ) : (
+                        <><FiCpu className="text-sm" /> AI Mode</>
+                      )}
+                    </span>
+                  </div>
                 </div>
               </div>
               
@@ -623,47 +658,62 @@ function CamerasView() {
                     <span className="text-gray-300 ml-2">{camera.location}</span>
                   </div>
                 </div>
-              </div>
-
-              {/* Expanded Details - Tickets Only */}
-              {isExpanded && (
-                <div className="space-y-3">
-
-                  <div className="glass p-4 rounded-lg border border-white/10">
-                    <h4 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-                      <FiTicket className="text-blue-400" />
-                      Assigned Tickets ({assignedTickets.length})
-                    </h4>
-                    {assignedTickets.length > 0 ? (
-                      <div className="space-y-2">
-                        {assignedTickets.slice(0, 3).map((ticket) => (
-                          <div key={ticket._id} className="p-2 bg-white/5 rounded border border-white/10">
-                            <div className="flex items-start justify-between mb-1">
-                              <span className="text-xs font-medium text-white">{ticket.title}</span>
-                              <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${
-                                ticket.status === "pending" ? "bg-gray-500/20 text-gray-300" :
-                                ticket.status === "in_progress" ? "bg-blue-500/20 text-blue-300" :
-                                ticket.status === "completed" ? "bg-green-500/20 text-green-300" :
-                                "bg-gray-500/20 text-gray-300"
-                              }`}>
-                                {ticket.status.replace('_', ' ').toUpperCase()}
-                              </span>
-                            </div>
-                            <p className="text-[10px] text-gray-400 line-clamp-1">{ticket.description}</p>
-                          </div>
-                        ))}
-                        {assignedTickets.length > 3 && (
-                          <p className="text-xs text-gray-500 text-center">
-                            +{assignedTickets.length - 3} more tickets
-                          </p>
-                        )}
-                      </div>
-                    ) : (
-                      <p className="text-xs text-gray-500 text-center py-2">No tickets assigned</p>
-                    )}
+                <div className="flex items-start gap-2">
+                  <div className={`px-3 py-2 rounded-lg border ${
+                    camera.engineerAvailable 
+                      ? "bg-blue-500/10 border-blue-500/30" 
+                      : "bg-blue-500/10 border-blue-500/30"
+                  }`}>
+                    <div className="flex items-center gap-2 mb-1">
+                      {camera.engineerAvailable ? (
+                        <><FiUsers className="text-blue-400 text-sm" /><p className="text-xs font-semibold text-gray-300">Engineer Available</p></>
+                      ) : (
+                        <><FiCpu className="text-blue-400 text-sm" /><p className="text-xs font-semibold text-gray-300">Engineer Unavailable</p></>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-400">
+                      {camera.engineerAvailable 
+                        ? "Live video call with engineer" 
+                        : "Talk to Kramtron.ai assistant"}
+                    </p>
                   </div>
                 </div>
-              )}
+              </div>
+
+              {/* Assigned Tickets */}
+              <div className="glass p-4 rounded-lg border border-white/10">
+                <h4 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                  <FiTicket className="text-blue-400" />
+                  Assigned Tickets ({assignedTickets.length})
+                </h4>
+                {assignedTickets.length > 0 ? (
+                  <div className="space-y-2">
+                    {assignedTickets.slice(0, 3).map((ticket) => (
+                      <div key={ticket._id} className="p-2 bg-white/5 rounded border border-white/10">
+                        <div className="flex items-start justify-between mb-1">
+                          <span className="text-xs font-medium text-white">{ticket.title}</span>
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${
+                            ticket.status === "pending" ? "bg-gray-500/20 text-gray-300" :
+                            ticket.status === "in_progress" ? "bg-blue-500/20 text-blue-300" :
+                            ticket.status === "completed" ? "bg-green-500/20 text-green-300" :
+                            "bg-gray-500/20 text-gray-300"
+                          }`}>
+                            {ticket.status.replace('_', ' ').toUpperCase()}
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-gray-400 line-clamp-1">{ticket.description}</p>
+                      </div>
+                    ))}
+                    {assignedTickets.length > 3 && (
+                      <p className="text-xs text-gray-500 text-center">
+                        +{assignedTickets.length - 3} more tickets
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-xs text-gray-500 text-center py-2">No tickets assigned</p>
+                )}
+              </div>
             </div>
           );
         })}
@@ -802,14 +852,137 @@ function EditCameraModal({ cameraId, onClose }: { cameraId: Id<"cameraFeeds">; o
   );
 }
 
+function ConversationHistoryModal({ cameraId, onClose }: { cameraId: Id<"cameraFeeds">; onClose: () => void }) {
+  const history = useQuery(api.conversationHistory.getCameraConversationHistory, { cameraId });
+
+  if (!history) {
+    return (
+      <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[60]" onClick={onClose}>
+        <div className="glass-strong p-8 rounded-xl border border-white/20 max-w-2xl w-full mx-4">
+          <div className="flex items-center justify-center gap-2">
+            <div className="animate-spin rounded-full h-6 w-6 border-2 border-blue-400 border-t-transparent"></div>
+            <span className="text-white">Loading conversation history...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const formatTimestamp = (timestamp: number) => {
+    const date = new Date(timestamp);
+    return date.toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
+  };
+
+  const getSpeakerLabel = (role: string) => {
+    if (role === 'assistant' || role === 'kramtron') return 'Kramtron';
+    if (role === 'technician') return 'Technician';
+    if (role === 'engineer') return 'Engineer';
+    return 'Speaker';
+  };
+
+  const getSpeakerIcon = (role: string) => {
+    if (role === 'assistant' || role === 'kramtron') return <FiCpu className="text-blue-400" />;
+    if (role === 'technician') return <FiUser className="text-green-400" />;
+    if (role === 'engineer') return <FiUser className="text-purple-400" />;
+    return <FiUser className="text-gray-400" />;
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[60]" onClick={onClose}>
+      <div className="glass-strong p-6 rounded-xl border border-white/20 max-w-3xl w-full mx-4 max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+        {/* Header */}
+        <div className="flex items-center justify-between mb-4 pb-4 border-b border-white/10">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <FiMessageSquare className="text-blue-400" />
+              <h2 className="text-xl font-bold text-white">Conversation History</h2>
+            </div>
+            <p className="text-sm text-gray-400">{history.cameraName} • {history.location}</p>
+            <p className="text-xs text-gray-500 mt-1">
+              {history.totalMessages} messages • Last updated: {history.lastUpdated ? formatTimestamp(history.lastUpdated) : 'N/A'}
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-full glass-strong border border-white/20 text-white hover:text-red-400 transition-all"
+          >
+            <FiX className="text-xl" />
+          </button>
+        </div>
+
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto space-y-3 pr-2">
+          {history.conversationHistory.length === 0 ? (
+            <div className="text-center py-12">
+              <FiMessageSquare className="text-4xl text-gray-600 mx-auto mb-3" />
+              <p className="text-gray-400">No conversation history yet</p>
+              <p className="text-xs text-gray-500 mt-1">Messages will appear here once conversations start</p>
+            </div>
+          ) : (
+            history.conversationHistory.map((msg, idx) => (
+              <div key={idx} className="glass-strong p-4 rounded-lg border border-white/10">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    {getSpeakerIcon(msg.role)}
+                    <span className="text-sm font-semibold text-white">{getSpeakerLabel(msg.role)}</span>
+                  </div>
+                  <span className="text-xs text-gray-500 flex items-center gap-1">
+                    <FiClock className="text-[10px]" />
+                    {formatTimestamp(msg.timestamp)}
+                  </span>
+                </div>
+                <p className="text-sm text-gray-300 leading-relaxed">{msg.content}</p>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="mt-4 pt-4 border-t border-white/10">
+          <button
+            onClick={onClose}
+            className="w-full px-4 py-2 rounded-lg bg-gradient-primary text-white font-semibold hover:shadow-glow transition-all"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function CameraFeedViewer({ cameraId, onClose }: { cameraId: Id<"cameraFeeds">; onClose: () => void }) {
-  const camera = useQuery(api.cameras.listCameras, {})?.find(c => c._id === cameraId);
+  const cameras = useQuery(api.cameras.listCameras, { activeOnly: false });
+  const camera = cameras?.find(c => c._id === cameraId);
   const [isMuted, setIsMuted] = useState(true);
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const localVideoRef = useRef<HTMLVideoElement>(null);
+  const [showHistory, setShowHistory] = useState(false);
+  
+  // Check if engineer is available
+  const isLiveCallMode = camera?.engineerAvailable === true;
+  
+  // Debug logging
+  console.log('📹 Camera Feed Viewer:', {
+    cameraName: camera?.name,
+    engineerAvailable: camera?.engineerAvailable,
+    mode: camera?.mode,
+    isLiveCallMode,
+  });
 
-  // Access user's webcam
+  // Access user's webcam ONLY in live call mode
   useEffect(() => {
+    if (!isLiveCallMode) {
+      // Don't access webcam in AI mode
+      return;
+    }
+
     const getWebcam = async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ 
@@ -832,7 +1005,7 @@ function CameraFeedViewer({ cameraId, onClose }: { cameraId: Id<"cameraFeeds">; 
         localStream.getTracks().forEach(track => track.stop());
       }
     };
-  }, []);
+  }, [isLiveCallMode]);
 
   // Update video element when stream changes
   useEffect(() => {
@@ -868,10 +1041,29 @@ function CameraFeedViewer({ cameraId, onClose }: { cameraId: Id<"cameraFeeds">; 
             <FiUser className="text-blue-400" />
             <h3 className="text-lg font-semibold text-white">{camera.name}'s Feed</h3>
           </div>
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-gray-400 mb-2">
             <FiMapPin className="inline mr-1" />
             {camera.location}
           </p>
+          <div className="flex items-center gap-2 mb-2">
+            <div className={`px-2 py-1 rounded text-xs font-semibold flex items-center gap-1.5 ${
+              isLiveCallMode 
+                ? "bg-blue-500/20 text-blue-300 border border-blue-500/30" 
+                : "bg-blue-500/20 text-blue-300 border border-blue-500/30"
+            }`}>
+              {isLiveCallMode ? (
+                <><FiUsers className="text-sm" /> Live Call Mode</>
+              ) : (
+                <><FiCpu className="text-sm" /> AI Assistant Mode</>
+              )}
+            </div>
+          </div>
+          <button
+            onClick={() => setShowHistory(true)}
+            className="w-full px-3 py-2 rounded-lg bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 text-blue-300 text-xs font-semibold flex items-center justify-center gap-2 transition-all"
+          >
+            <FiClock className="text-sm" /> View History
+          </button>
         </div>
 
         {/* Main video feed - Technician's external webcam */}
@@ -886,34 +1078,57 @@ function CameraFeedViewer({ cameraId, onClose }: { cameraId: Id<"cameraFeeds">; 
           </div>
         </div>
 
-        {/* Local webcam feed - bottom right corner */}
-        <div className="absolute bottom-24 right-8 z-20 w-80 aspect-video bg-black rounded-lg overflow-hidden border-2 border-white/20 shadow-2xl">
-          <video
-            ref={localVideoRef}
-            autoPlay
-            playsInline
-            muted
-            className="w-full h-full object-cover mirror"
-          />
-          {!localStream && (
-            <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
-              <div className="text-center text-white">
-                <FiVideo className="text-4xl mb-2 mx-auto text-gray-600" />
-                <p className="text-sm text-gray-400">Accessing webcam...</p>
+        {/* Conditional UI based on mode */}
+        {isLiveCallMode ? (
+          <>
+            {/* Live Call Mode: Show engineer webcam in bottom-left */}
+            <div className="absolute bottom-8 left-8 z-20 w-72 aspect-video bg-black rounded-lg overflow-hidden border-2 border-white/20 shadow-2xl">
+              <video
+                ref={localVideoRef}
+                autoPlay
+                playsInline
+                muted
+                className="w-full h-full object-cover mirror"
+              />
+              {!localStream && (
+                <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
+                  <div className="text-center text-white">
+                    <FiVideo className="text-4xl mb-2 mx-auto text-gray-600" />
+                    <p className="text-sm text-gray-400">Accessing webcam...</p>
+                  </div>
+                </div>
+              )}
+              <div className="absolute bottom-2 left-2 bg-black/60 px-2 py-1 rounded text-xs text-white">
+                👨‍💼 Engineer
               </div>
             </div>
-          )}
-        </div>
 
-        {/* Mute button - below local webcam */}
-        <button
-          onClick={() => setIsMuted(!isMuted)}
-          className="absolute bottom-8 right-8 z-20 p-4 rounded-full glass-strong border border-white/20 text-white hover:border-blue-400/40 transition-all hover:shadow-glow"
-          title={isMuted ? "Unmute" : "Mute"}
-        >
-          {isMuted ? <FiVolumeX className="text-2xl" /> : <FiVolume2 className="text-2xl" />}
-        </button>
+            {/* Live Call Chat Panel - RIGHT SIDE */}
+            <LiveCallChat cameraId={cameraId} />
+          </>
+        ) : (
+          <>
+            {/* AI Assistant Mode: Show "Talk to Kramtron.ai" */}
+            <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-20 glass-strong p-4 rounded-xl border border-blue-500/30 bg-blue-500/10">
+              <div className="flex items-center gap-3">
+                <FiCpu className="text-blue-400 text-3xl" />
+                <div>
+                  <p className="text-white font-semibold text-sm">Engineer Unavailable</p>
+                  <p className="text-gray-400 text-xs">Talk to Kramtron.ai for assistance</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Voice Chat for technician (AI mode) */}
+            <VoiceChat cameraId={cameraId} speaker="technician" />
+          </>
+        )}
       </div>
+
+      {/* Conversation History Modal */}
+      {showHistory && (
+        <ConversationHistoryModal cameraId={cameraId} onClose={() => setShowHistory(false)} />
+      )}
     </div>
   );
 }
@@ -1019,17 +1234,33 @@ function VisionAnalysisModal({ cameraId, onClose }: { cameraId: Id<"cameraFeeds"
 function ActivityView() {
   const tickets = useQuery(api.tickets.listTickets, {});
   const cameras = useQuery(api.cameras.listCameras, {});
+  const activityLogs = useQuery(api.activityLog.getActivityLogs, { limit: 100 });
 
   // Combine all activity into a single feed
   const activities: Array<{
     id: string;
-    type: "ticket" | "camera";
+    type: "ticket" | "camera" | "activity";
     timestamp: number;
     title: string;
     description: string;
     status?: string;
     priority?: string;
+    actor?: string;
+    activityType?: string;
   }> = [];
+
+  // Add activity logs (including all Nemotron/Kramtron actions)
+  activityLogs?.forEach((log) => {
+    activities.push({
+      id: log._id,
+      type: "activity",
+      timestamp: log.timestamp,
+      title: log.title,
+      description: log.description,
+      actor: log.actor,
+      activityType: log.type,
+    });
+  });
 
   // Add ticket activities
   tickets?.forEach((ticket) => {
@@ -1059,7 +1290,13 @@ function ActivityView() {
   // Sort by timestamp (most recent first)
   activities.sort((a, b) => b.timestamp - a.timestamp);
 
-  const getActivityIcon = (type: string) => {
+  const getActivityIcon = (type: string, actor?: string) => {
+    if (type === "activity") {
+      if (actor === "kramtron") {
+        return <FiCpu className="text-3xl text-blue-400" />;
+      }
+      return <FiActivity className="text-3xl" />;
+    }
     return type === "ticket" ? <FiTicket className="text-3xl" /> : <FiVideo className="text-3xl" />;
   };
 
@@ -1103,7 +1340,7 @@ function ActivityView() {
           activities.map((activity) => (
             <div key={activity.id} className="glass-strong p-6 rounded-xl border border-white/10 hover:border-[#64A8F0]/20 transition-all">
               <div className="flex items-start gap-4">
-                <div>{getActivityIcon(activity.type)}</div>
+                <div>{getActivityIcon(activity.type, activity.actor)}</div>
                 <div className="flex-1">
                   <div className="flex items-start justify-between mb-2">
                     <h3 className="text-lg font-semibold text-white">{activity.title}</h3>
@@ -1112,7 +1349,23 @@ function ActivityView() {
                     </span>
                   </div>
                   <p className="text-gray-400 mb-3">{activity.description}</p>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 flex-wrap">
+                    {activity.actor && (
+                      <span className={`px-3 py-1 rounded-lg text-xs font-semibold ${
+                        activity.actor === "kramtron" 
+                          ? "bg-blue-500/20 text-blue-300 border border-blue-500/30" 
+                          : activity.actor === "user"
+                          ? "bg-green-500/20 text-green-300 border border-green-500/30"
+                          : "bg-gray-500/20 text-gray-300 border border-gray-500/30"
+                      }`}>
+                        {activity.actor === "kramtron" ? "🤖 KRAMTRON" : activity.actor.toUpperCase()}
+                      </span>
+                    )}
+                    {activity.activityType && (
+                      <span className="px-3 py-1 rounded-lg text-xs font-semibold bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                        {activity.activityType.replace('_', ' ').toUpperCase()}
+                      </span>
+                    )}
                     {activity.status && (
                       <span className={`px-3 py-1 rounded-lg text-xs font-semibold border ${getStatusColor(activity.status)}`}>
                         {activity.status.toUpperCase()}
@@ -1257,6 +1510,139 @@ function DocumentsView() {
         {documents?.length === 0 && (
           <div className="text-center py-12 text-gray-500">
             No documents yet. Add one to get started.
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function InventoryView() {
+  const inventory = useQuery(api.inventory.listInventory, {});
+  const updateQuantity = useMutation(api.inventory.updateInventoryQuantity);
+  const orderPart = useMutation(api.inventory.orderPart);
+  const seedInventory = useMutation(api.inventory.seedInventory);
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+
+  const categories = [
+    { value: "all", label: "All Items", icon: <FiPackage /> },
+    { value: "servers", label: "Servers", icon: <FiBarChart2 /> },
+    { value: "networking", label: "Networking", icon: <FiLink /> },
+    { value: "storage", label: "Storage", icon: <FiPackage /> },
+    { value: "power", label: "Power", icon: <FiActivity /> },
+    { value: "cooling", label: "Cooling", icon: <FiActivity /> },
+    { value: "cables", label: "Cables", icon: <FiLink /> },
+  ];
+
+  const filteredInventory = selectedCategory === "all" 
+    ? inventory 
+    : inventory?.filter(item => item.category === selectedCategory);
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "in_stock": return "bg-green-500/20 text-green-300 border-green-500/30";
+      case "low_stock": return "bg-yellow-500/20 text-yellow-300 border-yellow-500/30";
+      case "out_of_stock": return "bg-red-500/20 text-red-300 border-red-500/30";
+      case "on_order": return "bg-blue-500/20 text-blue-300 border-blue-500/30";
+      default: return "bg-gray-500/20 text-gray-300 border-gray-500/30";
+    }
+  };
+
+  const handleSeedInventory = async () => {
+    try {
+      await seedInventory({});
+      console.log("✅ Inventory seeded successfully");
+    } catch (error) {
+      console.error("❌ Failed to seed inventory:", error);
+    }
+  };
+
+  return (
+    <div>
+      <div className="mb-6 flex justify-between items-center">
+        <div>
+          <h2 className="text-3xl font-bold text-white mb-2">Inventory</h2>
+          <p className="text-gray-400 text-sm">Data Center Parts & Equipment</p>
+        </div>
+        <button
+          onClick={handleSeedInventory}
+          className="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 text-blue-300 rounded-lg font-semibold text-sm transition-all hover:shadow-glow"
+        >
+          <FiPlus className="inline mr-2" />
+          Seed Inventory
+        </button>
+      </div>
+
+      {/* Category Filter */}
+      <div className="mb-6 flex gap-2 overflow-x-auto pb-2">
+        {categories.map((cat) => (
+          <button
+            key={cat.value}
+            onClick={() => setSelectedCategory(cat.value)}
+            className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all flex items-center gap-2 whitespace-nowrap ${
+              selectedCategory === cat.value
+                ? "bg-gradient-primary text-white shadow-glow"
+                : "glass-strong border border-white/10 text-gray-300 hover:border-blue-400/40"
+            }`}
+          >
+            {cat.icon}
+            {cat.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Inventory Grid */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {filteredInventory?.map((item) => (
+          <div key={item._id} className="glass-strong p-6 rounded-xl border border-white/10 hover:border-[#64A8F0]/20 transition-all hover:shadow-glow">
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-1">{item.name}</h3>
+                <p className="text-xs text-gray-500 font-mono">{item.partNumber}</p>
+              </div>
+              <span className={`px-3 py-1 rounded-lg text-xs font-semibold border ${getStatusColor(item.status)}`}>
+                {item.status.replace('_', ' ').toUpperCase()}
+              </span>
+            </div>
+
+            <div className="space-y-2 text-sm mb-4">
+              <div className="flex items-center justify-between">
+                <span className="text-gray-400">Quantity:</span>
+                <span className={`font-bold ${item.quantity <= item.minQuantity ? 'text-yellow-300' : 'text-white'}`}>
+                  {item.quantity}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-400">Min Stock:</span>
+                <span className="text-gray-300">{item.minQuantity}</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <FiMapPin className="text-gray-400 mt-0.5" />
+                <span className="text-gray-300 text-xs">{item.location}</span>
+              </div>
+              {item.notes && (
+                <div className="p-2 bg-white/5 rounded border border-white/10">
+                  <p className="text-xs text-gray-400">{item.notes}</p>
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => orderPart({ partNumber: item.partNumber, quantity: 10 })}
+                disabled={item.status === "on_order"}
+                className="flex-1 px-3 py-2 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 text-blue-300 rounded-lg text-xs font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Order More
+              </button>
+            </div>
+          </div>
+        ))}
+        {filteredInventory?.length === 0 && (
+          <div className="col-span-3 glass p-12 rounded-xl border border-white/10 text-center">
+            <FiPackage className="text-6xl mb-4 mx-auto text-gray-600" />
+            <p className="text-xl text-gray-400">No inventory items</p>
+            <p className="text-gray-500 mt-2">Click "Seed Inventory" to add mock data</p>
           </div>
         )}
       </div>

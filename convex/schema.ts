@@ -54,6 +54,11 @@ const applicationTables = {
     autoAnalyze: v.optional(v.boolean()), // Enable automatic frame analysis
     analyzeIntervalSeconds: v.optional(v.number()), // Seconds between captures (default: 30)
     lastAnalyzedAt: v.optional(v.number()), // Timestamp of last analysis
+    engineerAvailable: v.optional(v.boolean()), // Is engineer available for live call?
+    mode: v.optional(v.union(
+      v.literal("live_call"),      // Engineer + Technician call
+      v.literal("ai_assistant")    // Technician + Kramtron AI
+    )),
   }).index("by_active", ["isActive"])
     .index("by_auto_analyze", ["autoAnalyze", "isActive"]),
 
@@ -87,6 +92,35 @@ const applicationTables = {
       lastAction: v.optional(v.string()),
     }),
   }).index("by_agent_and_context", ["agentType", "contextId"]),
+
+  // Inventory
+  inventory: defineTable({
+    partNumber: v.string(),
+    name: v.string(),
+    category: v.union(
+      v.literal("servers"),
+      v.literal("networking"),
+      v.literal("storage"),
+      v.literal("power"),
+      v.literal("cooling"),
+      v.literal("cables"),
+      v.literal("other")
+    ),
+    quantity: v.number(),
+    minQuantity: v.number(), // Alert threshold
+    location: v.string(), // Bay/Shelf location
+    status: v.union(
+      v.literal("in_stock"),
+      v.literal("low_stock"),
+      v.literal("out_of_stock"),
+      v.literal("on_order")
+    ),
+    lastOrdered: v.optional(v.number()), // Timestamp
+    notes: v.optional(v.string()),
+  })
+    .index("by_category", ["category"])
+    .index("by_status", ["status"])
+    .index("by_part_number", ["partNumber"]),
 
   // Voice Interactions
   voiceInteractions: defineTable({
@@ -181,6 +215,40 @@ const applicationTables = {
   })
     .index("by_status", ["status"])
     .index("by_camera", ["cameraId"]),
+
+  // Activity Log for tracking all system actions (especially Nemotron/Kramtron)
+  activityLog: defineTable({
+    type: v.union(
+      v.literal("voice_response"),      // Kramtron responded to voice query
+      v.literal("inventory_order"),     // Inventory order placed
+      v.literal("inventory_replace"),   // Replacement ordered
+      v.literal("vision_analysis"),     // Vision analysis performed
+      v.literal("ticket_created"),      // Ticket created
+      v.literal("ticket_updated"),      // Ticket updated
+      v.literal("camera_updated"),     // Camera updated
+      v.literal("system_action")        // Other system actions
+    ),
+    actor: v.union(
+      v.literal("kramtron"),            // Kramtron AI
+      v.literal("user"),                // User action
+      v.literal("system")               // System action
+    ),
+    title: v.string(),
+    description: v.string(),
+    metadata: v.optional(v.object({
+      cameraId: v.optional(v.string()),
+      ticketId: v.optional(v.string()),
+      partNumber: v.optional(v.string()),
+      partName: v.optional(v.string()),
+      quantity: v.optional(v.number()),
+      message: v.optional(v.string()),
+      response: v.optional(v.string()),
+    })),
+    timestamp: v.number(),
+  })
+    .index("by_timestamp", ["timestamp"])
+    .index("by_type", ["type"])
+    .index("by_actor", ["actor"]),
 };
 
 export default defineSchema({
