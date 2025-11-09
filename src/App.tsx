@@ -23,7 +23,8 @@ import {
   FiChevronUp,
   FiUser,
   FiVolume2,
-  FiVolumeX
+  FiVolumeX,
+  FiEdit2
 } from "react-icons/fi";
 
 type Page = "tickets" | "technicians" | "cameras" | "activity";
@@ -496,13 +497,14 @@ function VoiceInteractionsModal({ technicianId, onClose }: { technicianId: Id<"t
 }
 
 function CamerasView() {
-  const cameras = useQuery(api.cameras.listCameras, {});
+  const cameras = useQuery(api.cameras.listCameras, { activeOnly: false });
   const tickets = useQuery(api.tickets.listTickets, {});
   const createCamera = useMutation(api.cameras.createCamera);
   const deleteCamera = useMutation(api.cameras.deleteCamera);
   const [showForm, setShowForm] = useState(false);
   const [selectedCameraId, setSelectedCameraId] = useState<Id<"cameraFeeds"> | null>(null);
   const [viewingCameraId, setViewingCameraId] = useState<Id<"cameraFeeds"> | null>(null);
+  const [editingCameraId, setEditingCameraId] = useState<Id<"cameraFeeds"> | null>(null);
   const [expandedCameras, setExpandedCameras] = useState<Set<string>>(new Set());
 
   const toggleExpand = (cameraId: string) => {
@@ -575,6 +577,16 @@ function CamerasView() {
                     <button 
                       onClick={(e) => {
                         e.stopPropagation();
+                        setEditingCameraId(camera._id);
+                      }}
+                      className="text-blue-400 hover:text-blue-300 text-lg transition-colors" 
+                      title="Edit camera"
+                    >
+                      <FiEdit2 />
+                    </button>
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
                         setSelectedCameraId(camera._id);
                       }}
                       className="text-blue-400 hover:text-blue-300 text-lg transition-colors" 
@@ -609,13 +621,6 @@ function CamerasView() {
                   <div>
                     <span className="font-semibold text-gray-400">Location:</span>
                     <span className="text-gray-300 ml-2">{camera.location}</span>
-                  </div>
-                </div>
-                <div className="flex items-start gap-2">
-                  <FiLink className="text-gray-400 mt-0.5" />
-                  <div className="flex-1 min-w-0">
-                    <span className="font-semibold text-gray-400">Stream:</span>
-                    <p className="text-xs text-gray-500 mt-1 break-all font-mono">{camera.streamUrl}</p>
                   </div>
                 </div>
               </div>
@@ -684,6 +689,115 @@ function CamerasView() {
           onClose={() => setViewingCameraId(null)} 
         />
       )}
+
+      {editingCameraId && (
+        <EditCameraModal 
+          cameraId={editingCameraId} 
+          onClose={() => setEditingCameraId(null)} 
+        />
+      )}
+    </div>
+  );
+}
+
+function EditCameraModal({ cameraId, onClose }: { cameraId: Id<"cameraFeeds">; onClose: () => void }) {
+  const cameras = useQuery(api.cameras.listCameras, { activeOnly: false });
+  const camera = cameras?.find(c => c._id === cameraId);
+  const updateCamera = useMutation(api.cameras.updateCamera);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+
+    const name = formData.get("name") as string;
+    const location = formData.get("location") as string;
+
+    console.log("Submitting update:", { cameraId, name, location });
+
+    try {
+      await updateCamera({
+        cameraId,
+        name,
+        streamUrl: "http://10.48.94.214:8080/video_feed",
+        location,
+      });
+      console.log("Camera updated successfully");
+      onClose();
+    } catch (error: any) {
+      console.error("Error updating camera:", error);
+      console.error("Error details:", error?.message, error?.data);
+      alert(`Failed to update camera: ${error?.message || "Please try again."}`);
+    }
+  };
+
+  if (!camera) {
+    console.log("Camera not found:", cameraId);
+    return (
+      <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4" onClick={onClose}>
+        <div className="glass-strong rounded-2xl border border-white/20 max-w-md w-full p-6">
+          <p className="text-white text-center">Loading camera data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  console.log("Editing camera:", camera);
+
+  return (
+    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div className="glass-strong rounded-2xl border border-white/20 max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+        <div className="p-6 border-b border-white/10 flex justify-between items-center">
+          <div>
+            <h2 className="text-2xl font-bold text-white">Edit Camera Feed</h2>
+            <p className="text-sm text-gray-400 mt-1">Update camera information and criteria</p>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-white text-2xl transition-colors">
+            <FiX />
+          </button>
+        </div>
+        
+        <form onSubmit={handleSubmit} className="p-6 overflow-y-auto flex-1">
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-300 mb-2">Employee Name</label>
+              <input
+                name="name"
+                type="text"
+                required
+                defaultValue={camera.name}
+                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/50 outline-none transition-all"
+                placeholder="e.g., Joe Doe1, Jane Smith2..."
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-300 mb-2">Location</label>
+              <input
+                name="location"
+                type="text"
+                required
+                defaultValue={camera.location}
+                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/50 outline-none transition-all"
+                placeholder="Camera location..."
+              />
+            </div>
+            <div className="flex gap-3 pt-4">
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 px-4 py-3 glass border border-white/20 text-white rounded-lg hover:bg-white/10 transition-all font-semibold"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="flex-1 px-4 py-3 bg-gradient-primary text-white rounded-lg hover:shadow-glow transition-all font-semibold transform hover:scale-[1.02]"
+              >
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }
@@ -764,7 +878,7 @@ function CameraFeedViewer({ cameraId, onClose }: { cameraId: Id<"cameraFeeds">; 
         <div className="w-full h-full flex items-center justify-center p-4">
           <div className="aspect-video bg-black rounded-lg overflow-hidden w-full h-full">
             <iframe
-              src={camera.streamUrl}
+              src="http://10.48.94.214:8080/video_feed"
               className="w-full h-full"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen

@@ -129,6 +129,48 @@ http.route({
   }),
 });
 
+// Test voice alert endpoint
+http.route({
+  path: "/api/test-voice",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    const body = await req.json();
+    const { technicianId, message } = body;
+
+    if (!technicianId || !message) {
+      return new Response(JSON.stringify({ error: "Missing technicianId or message" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    try {
+      const result = await ctx.runAction(internal.agents.voiceAgent.sendVoiceAlert, {
+        technicianId,
+        message,
+        triggerReason: "critical",
+      });
+
+      return new Response(JSON.stringify({
+        success: true,
+        result,
+        message: "Voice alert sent successfully!"
+      }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    } catch (error: any) {
+      return new Response(JSON.stringify({ 
+        error: error.message,
+        details: error.stack
+      }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+  }),
+});
+
 // System health check endpoint
 http.route({
   path: "/api/health",
@@ -146,6 +188,7 @@ http.route({
         processBatch: "/api/process-batch (POST)",
         assignTickets: "/api/assign-tickets (POST)",
         cacheStats: "/api/cache-stats (GET)",
+        testVoice: "/api/test-voice (POST)",
         health: "/api/health (GET)",
       },
       setup: [] as string[],

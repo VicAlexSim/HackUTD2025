@@ -67,6 +67,24 @@ export const toggleCameraActive = mutation({
   },
 });
 
+export const updateCamera = mutation({
+  args: {
+    cameraId: v.id("cameraFeeds"),
+    name: v.string(),
+    streamUrl: v.string(),
+    location: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.cameraId, {
+      name: args.name,
+      streamUrl: args.streamUrl,
+      location: args.location,
+    });
+    return null;
+  },
+});
+
 export const deleteCamera = mutation({
   args: { cameraId: v.id("cameraFeeds") },
   handler: async (ctx, args) => {

@@ -20,7 +20,22 @@ export const submitFrame = internalAction({
     frameData: v.string(), // base64 encoded
     priority: v.optional(v.number()), // Higher = process sooner (default: 1)
   },
-  handler: async (ctx, args) => {
+  returns: v.object({
+    cached: v.boolean(),
+    skipped: v.optional(v.boolean()),
+    queued: v.optional(v.boolean()),
+    analysisId: v.optional(v.id("visionAnalysis")),
+    queueId: v.optional(v.id("frameQueue")),
+    message: v.string(),
+  }),
+  handler: async (ctx, args): Promise<{
+    cached: boolean;
+    skipped?: boolean;
+    queued?: boolean;
+    analysisId?: Id<"visionAnalysis">;
+    queueId?: Id<"frameQueue">;
+    message: string;
+  }> => {
     // Hash the frame for deduplication
     const frameHash = hashFrame(args.frameData);
     
@@ -49,7 +64,7 @@ export const submitFrame = internalAction({
       limit: 10,
     });
 
-    const isTooSimilar = recentFrames.some((frame) => 
+    const isTooSimilar = recentFrames.some((frame: any) => 
       calculateSimilarity(frame.frameHash, frameHash) > SIMILARITY_THRESHOLD
     );
 
@@ -98,7 +113,18 @@ export const processBatch = internalAction({
   args: {
     cameraId: v.id("cameraFeeds"),
   },
-  handler: async (ctx, args) => {
+  returns: v.object({
+    batchId: v.optional(v.string()),
+    processed: v.optional(v.number()),
+    failed: v.optional(v.number()),
+    message: v.optional(v.string()),
+  }),
+  handler: async (ctx, args): Promise<{
+    batchId?: string;
+    processed?: number;
+    failed?: number;
+    message?: string;
+  }> => {
     const batchId = `batch_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
     // Get pending frames (sorted by priority)
@@ -116,7 +142,7 @@ export const processBatch = internalAction({
       batchId,
       cameraId: args.cameraId,
       frameCount: frames.length,
-      frameIds: frames.map((f) => f._id),
+      frameIds: frames.map((f: any) => f._id),
     });
 
     const results: Array<any> = [];
