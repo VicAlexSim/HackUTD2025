@@ -4,7 +4,7 @@ import { SignInForm } from "./SignInForm";
 import { SignOutButton } from "./SignOutButton";
 import { LandingPage } from "./LandingPage";
 import { Toaster } from "sonner";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Id } from "../convex/_generated/dataModel";
 import logo from "./logo.jpg";
 import { 
@@ -18,7 +18,12 @@ import {
   FiMapPin,
   FiLink,
   FiBarChart2,
-  FiCheckCircle
+  FiCheckCircle,
+  FiChevronDown,
+  FiChevronUp,
+  FiUser,
+  FiVolume2,
+  FiVolumeX
 } from "react-icons/fi";
 
 type Page = "tickets" | "technicians" | "cameras" | "activity";
@@ -492,10 +497,25 @@ function VoiceInteractionsModal({ technicianId, onClose }: { technicianId: Id<"t
 
 function CamerasView() {
   const cameras = useQuery(api.cameras.listCameras, {});
+  const tickets = useQuery(api.tickets.listTickets, {});
   const createCamera = useMutation(api.cameras.createCamera);
   const deleteCamera = useMutation(api.cameras.deleteCamera);
   const [showForm, setShowForm] = useState(false);
   const [selectedCameraId, setSelectedCameraId] = useState<Id<"cameraFeeds"> | null>(null);
+  const [viewingCameraId, setViewingCameraId] = useState<Id<"cameraFeeds"> | null>(null);
+  const [expandedCameras, setExpandedCameras] = useState<Set<string>>(new Set());
+
+  const toggleExpand = (cameraId: string) => {
+    setExpandedCameras(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(cameraId)) {
+        newSet.delete(cameraId);
+      } else {
+        newSet.add(cameraId);
+      }
+      return newSet;
+    });
+  };
 
   const handleCreateCamera = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -513,109 +533,135 @@ function CamerasView() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
+      <div className="mb-6">
         <h2 className="text-3xl font-bold text-white">Camera Feeds</h2>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="px-6 py-3 bg-gradient-accent text-white rounded-lg hover:shadow-glow transition-all font-semibold transform hover:scale-105 flex items-center gap-2"
-        >
-          {showForm ? <><FiX /> Cancel</> : <><FiPlus /> Add Camera</>}
-        </button>
       </div>
 
-      {showForm && (
-        <form onSubmit={handleCreateCamera} className="glass-strong p-6 rounded-xl border border-white/10 mb-6">
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-semibold text-gray-300 mb-2">Name</label>
-              <input
-                name="name"
-                type="text"
-                required
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:border-gray-400 focus:ring-2 focus:ring-gray-400/50 outline-none transition-all"
-                placeholder="Camera name..."
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-300 mb-2">Stream URL (YouTube or other)</label>
-              <input
-                name="streamUrl"
-                type="text"
-                required
-                placeholder="https://www.youtube.com/watch?v=..."
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:border-gray-400 focus:ring-2 focus:ring-gray-400/50 outline-none transition-all"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-300 mb-2">Location</label>
-              <input
-                name="location"
-                type="text"
-                required
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:border-gray-400 focus:ring-2 focus:ring-gray-400/50 outline-none transition-all"
-                placeholder="Camera location..."
-              />
-            </div>
-            <button
-              type="submit"
-              className="w-full px-4 py-3 bg-gradient-accent text-white rounded-lg hover:shadow-glow transition-all font-semibold transform hover:scale-[1.02]"
-            >
-              Add Camera
-            </button>
-          </div>
-        </form>
-      )}
-
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {cameras?.map((camera) => (
-          <div key={camera._id} className="glass-strong p-6 rounded-xl border border-white/10 hover:border-[#64A8F0]/20 transition-all hover:shadow-glow group">
-            <div className="flex justify-between items-start mb-3">
-              <div>
-                <h3 className="text-lg font-semibold">{camera.name}</h3>
-                <p className="text-xs text-gray-400 mt-1">{camera._id}</p>
-              </div>
-              <div className="flex gap-2 items-center">
-                <span className={`px-3 py-1 rounded-lg text-xs font-semibold ${
-                  camera.isActive 
-                    ? "bg-green-500/20 text-green-300 border border-green-500/30" 
-                    : "bg-gray-500/20 text-gray-400 border border-gray-500/30"
-                }`}>
-                  {camera.isActive ? "● ACTIVE" : "○ INACTIVE"}
-                </span>
-                <button 
-                  onClick={() => setSelectedCameraId(camera._id)} 
-                  className="text-blue-400 hover:text-blue-300 text-lg transition-colors" 
-                  title="View analysis"
-                >
-                  <FiBarChart2 />
-                </button>
-                <button 
-                  onClick={() => deleteCamera({ cameraId: camera._id })} 
-                  className="text-red-400 hover:text-red-300 text-lg transition-colors" 
-                  title="Delete"
-                >
-                  <FiTrash2 />
-                </button>
-              </div>
-            </div>
-            <div className="space-y-3 text-sm">
-              <div className="flex items-start gap-2">
-                <FiMapPin className="text-gray-400 mt-0.5" />
-                <div>
-                  <span className="font-semibold text-gray-400">Location:</span>
-                  <span className="text-gray-300 ml-2">{camera.location}</span>
+        {cameras?.map((camera) => {
+          const isExpanded = expandedCameras.has(camera._id);
+          // Find tickets assigned to this camera/employee
+          const assignedTickets = tickets?.filter(ticket => 
+            ticket.metadata?.cameraId === camera._id || 
+            ticket.technician?.name === camera.name
+          ) || [];
+          
+          return (
+            <div 
+              key={camera._id} 
+              onClick={() => setViewingCameraId(camera._id)}
+              className="glass-strong p-6 rounded-xl border border-white/10 hover:border-[#64A8F0]/20 transition-all hover:shadow-glow group cursor-pointer"
+            >
+              <div className="flex justify-between items-start mb-4">
+                <div className="flex items-center gap-2">
+                  <FiUser className="text-blue-400 text-xl" />
+                  <div>
+                    <h3 className="text-lg font-semibold text-white">{camera.name}'s Feed</h3>
+                    <p className="text-xs text-gray-500 font-mono mt-0.5">{camera._id.slice(0, 12)}...</p>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-2 items-end">
+                  <div className="flex gap-2 items-center">
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleExpand(camera._id);
+                      }}
+                      className="p-2 rounded-full glass border border-white/20 hover:border-blue-400/40 text-blue-400 hover:text-blue-300 transition-all hover:shadow-glow"
+                      title={isExpanded ? "Collapse tickets" : "View tickets"}
+                    >
+                      {isExpanded ? <FiChevronUp /> : <FiChevronDown />}
+                    </button>
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedCameraId(camera._id);
+                      }}
+                      className="text-blue-400 hover:text-blue-300 text-lg transition-colors" 
+                      title="View analysis"
+                    >
+                      <FiBarChart2 />
+                    </button>
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteCamera({ cameraId: camera._id });
+                      }}
+                      className="text-red-400 hover:text-red-300 text-lg transition-colors" 
+                      title="Delete"
+                    >
+                      <FiTrash2 />
+                    </button>
+                  </div>
+                  <span className={`px-3 py-1 rounded-lg text-xs font-semibold ${
+                    camera.isActive 
+                      ? "bg-green-500/20 text-green-300 border border-green-500/30" 
+                      : "bg-gray-500/20 text-gray-400 border border-gray-500/30"
+                  }`}>
+                    {camera.isActive ? "● On Duty" : "○ Off Duty"}
+                  </span>
                 </div>
               </div>
-              <div className="flex items-start gap-2">
-                <FiLink className="text-gray-400 mt-0.5" />
-                <div className="flex-1 min-w-0">
-                  <span className="font-semibold text-gray-400">Stream:</span>
-                  <p className="text-xs text-gray-500 mt-1 break-all font-mono">{camera.streamUrl}</p>
+              
+              <div className="space-y-3 text-sm mb-4">
+                <div className="flex items-start gap-2">
+                  <FiMapPin className="text-gray-400 mt-0.5" />
+                  <div>
+                    <span className="font-semibold text-gray-400">Location:</span>
+                    <span className="text-gray-300 ml-2">{camera.location}</span>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2">
+                  <FiLink className="text-gray-400 mt-0.5" />
+                  <div className="flex-1 min-w-0">
+                    <span className="font-semibold text-gray-400">Stream:</span>
+                    <p className="text-xs text-gray-500 mt-1 break-all font-mono">{camera.streamUrl}</p>
+                  </div>
                 </div>
               </div>
+
+              {/* Expanded Details - Tickets Only */}
+              {isExpanded && (
+                <div className="space-y-3">
+
+                  <div className="glass p-4 rounded-lg border border-white/10">
+                    <h4 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                      <FiTicket className="text-blue-400" />
+                      Assigned Tickets ({assignedTickets.length})
+                    </h4>
+                    {assignedTickets.length > 0 ? (
+                      <div className="space-y-2">
+                        {assignedTickets.slice(0, 3).map((ticket) => (
+                          <div key={ticket._id} className="p-2 bg-white/5 rounded border border-white/10">
+                            <div className="flex items-start justify-between mb-1">
+                              <span className="text-xs font-medium text-white">{ticket.title}</span>
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${
+                                ticket.status === "pending" ? "bg-gray-500/20 text-gray-300" :
+                                ticket.status === "in_progress" ? "bg-blue-500/20 text-blue-300" :
+                                ticket.status === "completed" ? "bg-green-500/20 text-green-300" :
+                                "bg-gray-500/20 text-gray-300"
+                              }`}>
+                                {ticket.status.replace('_', ' ').toUpperCase()}
+                              </span>
+                            </div>
+                            <p className="text-[10px] text-gray-400 line-clamp-1">{ticket.description}</p>
+                          </div>
+                        ))}
+                        {assignedTickets.length > 3 && (
+                          <p className="text-xs text-gray-500 text-center">
+                            +{assignedTickets.length - 3} more tickets
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-gray-500 text-center py-2">No tickets assigned</p>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
-        ))}
+          );
+        })}
         {cameras?.length === 0 && (
           <div className="col-span-3 glass p-12 rounded-xl border border-white/10 text-center">
             <FiVideo className="text-6xl mb-4 mx-auto text-gray-600" />
@@ -631,6 +677,129 @@ function CamerasView() {
           onClose={() => setSelectedCameraId(null)} 
         />
       )}
+
+      {viewingCameraId && (
+        <CameraFeedViewer 
+          cameraId={viewingCameraId} 
+          onClose={() => setViewingCameraId(null)} 
+        />
+      )}
+    </div>
+  );
+}
+
+function CameraFeedViewer({ cameraId, onClose }: { cameraId: Id<"cameraFeeds">; onClose: () => void }) {
+  const camera = useQuery(api.cameras.listCameras, {})?.find(c => c._id === cameraId);
+  const [isMuted, setIsMuted] = useState(true);
+  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
+  const localVideoRef = useRef<HTMLVideoElement>(null);
+
+  // Access user's webcam
+  useEffect(() => {
+    const getWebcam = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          video: true, 
+          audio: false 
+        });
+        setLocalStream(stream);
+        if (localVideoRef.current) {
+          localVideoRef.current.srcObject = stream;
+        }
+      } catch (err) {
+        console.error("Error accessing webcam:", err);
+      }
+    };
+    getWebcam();
+
+    // Cleanup function to stop webcam when component unmounts
+    return () => {
+      if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, []);
+
+  // Update video element when stream changes
+  useEffect(() => {
+    if (localVideoRef.current && localStream) {
+      localVideoRef.current.srcObject = localStream;
+    }
+  }, [localStream]);
+
+  const getYouTubeEmbedUrl = (url: string): string => {
+    const videoIdMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\s]+)/);
+    if (videoIdMatch) {
+      return `https://www.youtube.com/embed/${videoIdMatch[1]}?autoplay=1${isMuted ? '&mute=1' : ''}`;
+    }
+    return url;
+  };
+
+  if (!camera) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50" onClick={onClose}>
+      <div className="relative w-full h-full" onClick={(e) => e.stopPropagation()}>
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 z-10 p-3 rounded-full glass-strong border border-white/20 text-white hover:text-red-400 transition-all hover:shadow-glow"
+        >
+          <FiX className="text-2xl" />
+        </button>
+
+        {/* Camera info */}
+        <div className="absolute top-4 left-4 z-10 glass-strong p-4 rounded-xl border border-white/20">
+          <div className="flex items-center gap-2 mb-2">
+            <FiUser className="text-blue-400" />
+            <h3 className="text-lg font-semibold text-white">{camera.name}'s Feed</h3>
+          </div>
+          <p className="text-xs text-gray-400">
+            <FiMapPin className="inline mr-1" />
+            {camera.location}
+          </p>
+        </div>
+
+        {/* Main video feed - Technician's external webcam */}
+        <div className="w-full h-full flex items-center justify-center p-4">
+          <div className="aspect-video bg-black rounded-lg overflow-hidden w-full h-full">
+            <iframe
+              src={camera.streamUrl}
+              className="w-full h-full"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
+        </div>
+
+        {/* Local webcam feed - bottom right corner */}
+        <div className="absolute bottom-24 right-8 z-20 w-80 aspect-video bg-black rounded-lg overflow-hidden border-2 border-white/20 shadow-2xl">
+          <video
+            ref={localVideoRef}
+            autoPlay
+            playsInline
+            muted
+            className="w-full h-full object-cover mirror"
+          />
+          {!localStream && (
+            <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
+              <div className="text-center text-white">
+                <FiVideo className="text-4xl mb-2 mx-auto text-gray-600" />
+                <p className="text-sm text-gray-400">Accessing webcam...</p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Mute button - below local webcam */}
+        <button
+          onClick={() => setIsMuted(!isMuted)}
+          className="absolute bottom-8 right-8 z-20 p-4 rounded-full glass-strong border border-white/20 text-white hover:border-blue-400/40 transition-all hover:shadow-glow"
+          title={isMuted ? "Unmute" : "Mute"}
+        >
+          {isMuted ? <FiVolumeX className="text-2xl" /> : <FiVolume2 className="text-2xl" />}
+        </button>
+      </div>
     </div>
   );
 }

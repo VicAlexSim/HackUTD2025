@@ -141,3 +141,8 @@ body {
 .glow-hover:hover {
   box-shadow: 0 0 30px rgba(100, 168, 240, 0.5);
 }
+
+/* Mirror effect for local webcam */
+.mirror {
+  transform: scaleX(-1);
+}
