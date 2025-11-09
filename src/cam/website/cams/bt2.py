@@ -3,6 +3,7 @@ from voxel_sdk.ble import BleVoxelTransport  # or VoxelTransport
 import time
 import os
 from dotenv import load_dotenv
+import asyncio
 
 Wifi_ssid = os.getenv('Wifi_ssid')
 Wifi_password = os.getenv('Wifi_password')
@@ -10,7 +11,7 @@ Web_host_ip = os.getenv('Web_host_ip')
 def initialize_cam():
     transport = BleVoxelTransport(device_name="voxel")
     try:
-        transport.connect("")
+        asyncio.run(transport.connect(""))
     except:
         print("bt error")
     controller = DeviceController(transport)
