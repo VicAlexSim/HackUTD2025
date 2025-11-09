@@ -38,7 +38,7 @@ type Page = "tickets" | "cameras" | "activity" | "inventory";
 export default function App() {
   const loggedInUser = useQuery(api.auth.loggedInUser);
   const [activePage, setActivePage] = useState<Page>("tickets");
-  const pages: Page[] = ["tickets", "technicians", "cameras", "activity", "inventory"]
+  const pages: Page[] = ["tickets", "cameras", "activity", "inventory"]
 
   return (
     <div className="min-h-screen flex flex-col">
