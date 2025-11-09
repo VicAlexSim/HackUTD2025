@@ -10,37 +10,6 @@ import time
 from cams.stream_capture import start_stream_capture, get_frame, close_stream
 from cams.bt2 import initialize_cam, close_cam
 
-import queue
-
-class Publisher:
-    def __init__(self):
-        self.message_queue = queue.Queue()
-        self.subscribers = []
-
-    def subscribe(self, subscriber):
-        self.subscribers.append(subscriber)
-
-    def publish(self, message):
-        self.message_queue.put(message)
-        for subscriber in self.subscribers:
-            subscriber.receive(message)
-
-class Subscriber:
-    img = b''
-
-    def __init__(self, name):
-        self.name = name
-
-    def receive(self, message):
-        self.img = message
-
-    def get_img(self):
-        while True:
-            yield self.img
-            time.sleep(0.01)
-
-pub = Publisher()
-
 # Create a Flask app instance
 app = Flask(__name__, static_url_path='/static')
 con = None
@@ -54,7 +23,6 @@ def first_req():
         try:
             ctrl = initialize_cam()
             con = start_stream_capture(ctrl)
-            generate_frames()
         except Exception as e:
             print("dang")
             print(e)
@@ -72,9 +40,8 @@ def generate_frames():
             if buffer is not None:
                 frame = buffer.tobytes()
                 # Concatenate frame and yield for streaming
-                global pub
-                pub.publish((b'--frame\r\n'
-                       b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')) 
+                yield (b'--frame\r\n'
+                       b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n') 
             elapsed_time = time.time() - start_time
             logging.debug(f"Frame generation time: {elapsed_time} seconds")
 
@@ -124,9 +91,7 @@ def offer_route():
 # Route to stream video frames
 @app.route('/video_feed')
 def video_feed():
-    sub = Subscriber("client")
-    pub.subscribe(sub)
-    return Response(sub.get_img(), mimetype='multipart/x-mixed-replace; boundary=frame')
+    return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 # Run the Flask app
 if __name__ == "__main__":
